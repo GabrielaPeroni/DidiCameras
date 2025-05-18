@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Dashboard</title>
+</head>
+
+<body>
+    <h2>Welcome, {{ request.user.username }}!</h2>
+    <h3>Recent Recordings</h3>
+    <table border="1">
+        <tr>
+            <th>Camera</th>
+            <th>Location</th>
+            <th>Timestamp</th>
+            <th>Category</th>
+            <th>Video</th>
+        </tr>
+        {% for rec in recordings %}
+        <tr>
+            <td>{{ rec.camera.name }}</td>
+            <td>{{ rec.camera.location }}</td>
+            <td>{{ rec.timestamp }}</td>
+            <td>{{ rec.category }}</td>
+            <td>
+                {% if rec.s3_url %}
+                <a href="{{ rec.s3_url }}" target="_blank">View</a>
+                {% else %}
+                No File
+                {% endif %}
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="5">No recordings found.</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <br>
+    <a href="{% url 'logout' %}">Logout</a>
+
+    <!-- Hidden admin button -->
+    <div id="admin-button" style="display: none; margin-top: 20px;">
+        <a href="/manage-system-7359/">Admin Panel</a>
+    </div>
+
+    <!-- JavaScript for keyboard shortcut -->
+    <script>
+        const adminButton = document.getElementById('admin-button');
+
+        document.addEventListener('keydown', function (e) {
+            if (e.shiftKey && e.key === 'A') {
+                adminButton.style.display = 'block';
+            }
+        });
+
+        document.addEventListener('keyup', function (e) {
+            if (e.key === 'A' || e.key === 'Shift') {
+                adminButton.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+
+</html>
