@@ -1,0 +1,77 @@
+#filter-form {
+    display: flex;
+    justify-content: right;
+    gap: 10px;
+    margin: 20px 0;
+}
+
+.date-wrapper {
+    position: relative;
+}
+
+.calendar-icon {
+    position: absolute;
+    right: 10px;
+    top: 30%;
+
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+
+@media (max-width: 768px) {
+    #filter-form {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .flatpickr-input,
+    #search {
+        width: 90%;
+        margin-bottom: 10px;
+    }
+
+    table {
+        font-size: 14px;
+    }
+}
+
+a {
+    text-decoration: none;
+    color: blue;
+}
+
+.flatpickr-input {
+    padding: 10px 15px;
+    border: 1px solid #D1D1D1;
+    border-radius: 5px;
+    width: 200px;
+    transition: border 0.3s ease;
+}
+
+.flatpickr-input:focus {
+    outline: none;
+    border-color: #007BFF;
+}
+
+#date {
+    height: 40px;
+    width: 180px;
+    font-size: 16px;
+    border: 1px solid #D1D1D1;
+    padding: 3px 10px;
+    box-sizing: border-box;
+    background: url('/static/img/calendar-icon.svg') no-repeat right 10px center;
+}
+
+#search {
+    padding: 10px 15px;
+    border: 1px solid #D1D1D1;
+    border-radius: 5px;
+    width: 200px;
+    transition: border 0.3s ease;
+}
+
+#search:focus {
+    outline: none;
+    border-color: #007BFF;
+}

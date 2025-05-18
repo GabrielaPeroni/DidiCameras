@@ -1,38 +1,57 @@
+{% load static %}
 <!DOCTYPE html>
 <html>
 
 <head>
+    <meta charset="UTF-8">
     <title>Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'css/dashboard.css' %}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 </head>
 
 <body>
-    <h2>Welcome, {{ request.user.username }}!</h2>
-    <h3>Recent Recordings</h3>
+    <h1>Olá, {{ request.user.username }}!</h1>
+    <h3>Gravações Recentes</h3>
+    <form method="get" id="filter-form">
+        <div class="date-wrapper">
+            <input type="text" id="date" name="date" class="flatpickr-input" placeholder="dd/mm/aaaa"
+                value="{{ request.GET.date|default:'' }}">
+
+        </div>
+
+        <input type="text" id="search" name="search" placeholder="Buscar..."
+            value="{{ request.GET.search|default:'' }}">
+    </form>
+
+
+    <br>
     <table border="1">
         <tr>
-            <th>Camera</th>
-            <th>Location</th>
-            <th>Timestamp</th>
-            <th>Category</th>
+            <th>Camera ID</th>
+            <th>Local</th>
+            <th>Detalhes</th>
             <th>Video</th>
         </tr>
         {% for rec in recordings %}
         <tr>
             <td>{{ rec.camera.name }}</td>
             <td>{{ rec.camera.location }}</td>
-            <td>{{ rec.timestamp }}</td>
-            <td>{{ rec.category }}</td>
+            <td>{{ rec.timestamp|date:"y-m-d" }}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ rec.timestamp|date:"H:i" }}</td>
+
             <td>
                 {% if rec.s3_url %}
-                <a href="{{ rec.s3_url }}" target="_blank">View</a>
+                <a href="{{ rec.s3_url }}" target="_blank">Link</a>
                 {% else %}
-                No File
+                Nenhum arquivo
                 {% endif %}
             </td>
         </tr>
         {% empty %}
         <tr>
-            <td colspan="5">No recordings found.</td>
+            <td colspan="5">Nenhuma gravação encontrada..</td>
         </tr>
         {% endfor %}
     </table>
@@ -45,22 +64,10 @@
         <a href="/manage-system-7359/">Admin Panel</a>
     </div>
 
-    <!-- JavaScript for keyboard shortcut -->
-    <script>
-        const adminButton = document.getElementById('admin-button');
 
-        document.addEventListener('keydown', function (e) {
-            if (e.shiftKey && e.key === 'A') {
-                adminButton.style.display = 'block';
-            }
-        });
-
-        document.addEventListener('keyup', function (e) {
-            if (e.key === 'A' || e.key === 'Shift') {
-                adminButton.style.display = 'none';
-            }
-        });
-    </script>
+    <!-- Flatpickr JS -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="{% static 'js/dashboard.js' %}"></script>
 </body>
 
 </html>

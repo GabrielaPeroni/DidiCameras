@@ -11,7 +11,6 @@ class Camera(models.Model):
 
 class Recording(models.Model):
     camera = models.ForeignKey(Camera, on_delete=models.CASCADE, related_name='recordings')
-    category = models.CharField(max_length=100, blank=True)
     s3_url = models.URLField()  # Path to the recording file in S3
     timestamp = models.DateTimeField(auto_now_add=True)
 

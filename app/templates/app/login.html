@@ -1,37 +1,39 @@
+{% load static %}
+
 <!DOCTYPE html>
 <html>
 
 <head>
-    <title>Login</title>
-</head>
+    <meta charset="UTF-8">
+    <title>Bem vindo a Didi Cameras!</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'css/login.css' %}">
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 
-<body>
-    <h2>Login</h2>
-    {% if error %}
-    <p style="color:red;">{{ error }}</p>
-    {% endif %}
-    <form method="post">
-        {% csrf_token %}
-        <label>Username:</label><input type="text" name="username"><br>
-        <label>Password:</label><input type="password" id="password" name="password" required>
-        <label>
-            <input type="checkbox" id="togglePassword"> Show Password
-        </label>
+    <head>
 
-        <script>
-            const passwordInput = document.getElementById('password');
-            const togglePassword = document.getElementById('togglePassword');
+    <body>
+        <div class="background-image">
+            <div class="login-container">
+                <h2>Bem-vindo!</h2>
 
-            togglePassword.addEventListener('change', () => {
-                if (togglePassword.checked) {
-                    passwordInput.type = 'text';
-                } else {
-                    passwordInput.type = 'password';
-                }
-            });
-        </script>
-        <button type="submit">Login</button>
-    </form>
-</body>
+                {% if error %}
+                <p class="error-message">{{ error }}</p>
+                {% endif %}
+
+                <form method="post">
+                    {% csrf_token %}
+                    <label>Usuário:</label>
+                    <input type="text" name="username" required>
+                    <label>Senha:</label>
+                    <input type="password" id="password" name="password" required>
+                    <label>
+                        <input type="checkbox" id="togglePassword"> Mostrar Senha
+                    </label>
+                    <button type="submit">Login</button>
+                </form>
+                <script src="{% static 'js/login.js' %}"></script>
+    </body>
 
 </html>
