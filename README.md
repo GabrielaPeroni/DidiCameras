@@ -39,4 +39,3 @@ Feito para a matéria Cloud, Iot e Indústria 4.0 em Python
    ```
    python manage.py migrate
    python manage.py runserver
-  ```
