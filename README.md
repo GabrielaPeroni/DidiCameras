@@ -3,12 +3,11 @@ Este é um projeto Django para sincronizar e armazenar dados de câmeras em um b
 Feito para a matéria Cloud, Iot e Indústria 4.0 em Python
 
 **Requisitos**
-- Python 3.8+
-- PostgreSQL (usado na AWS RDS)
-- Virtualenv (recomendado)
-- Git
-- AWS EC2 (para hospedar o projeto)
-- Biblioteca python-decouple para carregar variáveis de ambiente
+- Python 3.x
+- Banco de dados PostgreSQL (AWS RDS, etc)
+- Credenciais AWS configuradas no arquivo ```.env```
+- Django e dependências instaladas [```pip install -r requirements.txt```]
+- Ambiente virtual [recomendado]
 
 ## 🚀 Instrucoes de setup local
 
@@ -29,13 +28,12 @@ Feito para a matéria Cloud, Iot e Indústria 4.0 em Python
 4. **Configure as variáveis de ambiente em um arquivo .env na raiz do projeto**
    ```
     DB_ENGINE = django.db.backends.postgresql
-    DB_NAME= nome_do_banco
-    DB_USER= usuario
-    DB_PASSWORD= senha
-    DB_HOST= host_aws_rds
-    DB_PORT= aws_port
+    DB_NAME= nome_database
+    DB_USER= nome_usuario
+    ...
     ```
 5. **Execute as migracoes e inicie o projeto**
    ```
    python manage.py migrate
    python manage.py runserver
+Para resetar o banco, rode ```python manage.py flush``` (ATENÇÃO: apaga todos os dados).
