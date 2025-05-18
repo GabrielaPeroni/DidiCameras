@@ -29,19 +29,24 @@ SECRET_KEY = config('DJANGO_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = [config('SITE_IP'), config('SITE_HOST'), config('SITE_HOST_2')]
+ALLOWED_HOSTS = [
+    config('SITE_IP'), 
+    config('SITE_HOST'), 
+    config('SITE_HOST_2'),
+    config('LOCAL_IP'),
+    ]
 
 
 # Application definition
 
 INSTALLED_APPS = [
+    'app',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'app',
     'rest_framework',
 ]
 
@@ -74,6 +79,8 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'DidiCameras.wsgi.application'
 
+LOGIN_URL = '/'
+LOGIN_REDIRECT_URL = '/dashboard/'
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
