@@ -13,13 +13,13 @@ Feito para a matéria Cloud, Iot e Indústria 4.0 em Python
 
 1. **Clone o repositório**
    ```bash
-   https://github.com/GabrielaPeroni/DidiCameras.git
+   git clone https://github.com/GabrielaPeroni/DidiCameras.git
    cd DidiCameras
    ```
 2. **Crie um virtual environment**
    ```bash
     python3 -m venv env
-    source env/bin/activate
+    env/Scripts/activate.bat
     ```
 3. **Instale as dependencias**
    ```bash
