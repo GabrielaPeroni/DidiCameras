@@ -123,6 +123,11 @@ AUTHENTICATION_BACKENDS = [
 SESSION_COOKIE_AGE = 1800  # 30 minutes
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+CSRF_COOKIE_SECURE = False
+
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
