@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Live Stream</title>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            background: black;
+        }
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+</head>
+<body>
+    <video id="video" autoplay muted></video>
+
+    <script>
+        var video = document.getElementById('video');
+
+        if (Hls.isSupported()) {
+            var hls = new Hls();
+            hls.loadSource('https://bucket-teste-live-camera1.s3.sa-east-1.amazonaws.com/frontcam.m3u8?response-content-disposition=inline&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Security-Token=IQoJb3JpZ2luX2VjEKT%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXNhLWVhc3QtMSJHMEUCIQCbuSmyD9mCKsZvK3gEQEZdEwug7%2BjQdtB35Yu5aPjrFAIgeF19GrH8gWYW69HQOGXvYlH%2FqHDXmqAasqKjZ%2FLc20sqzAMIbRAAGgw2OTk1MzU3OTk1MzUiDLOmBtghoDKHNgoQ6iqpA3lSSV02bxLVpuVbOY%2FxQCwb2IOjt8Vwhm%2B0U01IT61zzL9wnt2japw1dz96iqEP957vI4foluspwPDegpJriTZsx53r2sMOxu5ftvfbi56owGw%2FMkgQn8uDi4tmQyeNx8o4dZ60J%2BEStXc5ddoF0AvSFUAwNIGW0IymxQaASyWLDH8g0NnCYB0p8KDft4%2FU1R3vS%2FnLtxAW9FFT7NYj7SgU8z6UR35o9FgTdvQnhFVWPmsORT7eJNGMtAN32wTZxBK4yJl9eS29dbv44%2BHNqvKKQ2UxiAgHvBjdXFoCzIM2Nv%2Bnfz0EPkA%2FxanekgiGuyc8fHvZzyyDFUGPkc4N1rNN81If0jPsGV9lZutcqrnGslznx50T70JPRM%2Flaxttp%2BmfBfWLhTVaTt0lvTmB6yGSwzz3i%2FwjVyvWd5AqOEylOv0%2BNcIBknR%2Bg1qm4bSmog9ibqkjEBdvVX7GBw0nIV0vSR7pFhXItRzM9d7hIO5wmyg5IlfELRCDxVxuQkPwbmKuxAx36bbyC9jWe%2BOaVljxID%2B%2F3f4EpGB21hAHk6HY5yyAFsIg44gtMOPS2MEGOt4CNLOAPRNwO6o0S%2F7zgQnKEyh2NCNh3IQjvS%2FhvuAP6Wps%2FotE7mmVoy82WgbTSyBMqF5jYyk57aUvpPX4ebbwP344PqbxUOX6GchiDOeOkH41rnV7g7E9NkW%2BB8Kprx7moRBbjcfb9MKboq7tn%2BvKUEjkshEIpgsCZ8vLLJgkV8flevFNnT8qZyXq%2BDdhkEExoxDf06fKClvOqF1n%2B76mmP5BLjVAj%2Biz4Sjt%2F0yxlVi2UeEiqpcYG8rVXPZXEvUV%2FiD2yP3lslcNEUpTFk3qprIK1fAhJzI5vA9nCJQoZvauJhh8k4FFnw47J1rwWEaa3D0Ritnf8555yx%2FHnUVLnW8ZQczEqLg8d6%2FH63HpijKZEPU%2FLomSQ8Wy2SjQlYpbfQqbwhY4ZeAEeysBlNUmFN0QQ7VJUgyM6v7n72lPuwyKOiSLC6OGwKwt6qEUw4J8a08zE0V1QoMyf9dVoqE%3D&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=ASIA2FX4VGTXRDW374XG%2F20250528%2Fsa-east-1%2Fs3%2Faws4_request&X-Amz-Date=20250528T033322Z&X-Amz-Expires=43200&X-Amz-SignedHeaders=host&X-Amz-Signature=5964cf5dd030a2cc617077f3faeb16fc45bb15625819353c62308df50c3e0c74');
+            hls.attachMedia(video);
+            hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                video.play();
+            });
+        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            video.src = 'https://bucket-teste-live-camera1.s3.sa-east-1.amazonaws.com/frontcam.m3u8?response-content-disposition=inline&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Security-Token=IQoJb3JpZ2luX2VjEKT%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXNhLWVhc3QtMSJHMEUCIQCbuSmyD9mCKsZvK3gEQEZdEwug7%2BjQdtB35Yu5aPjrFAIgeF19GrH8gWYW69HQOGXvYlH%2FqHDXmqAasqKjZ%2FLc20sqzAMIbRAAGgw2OTk1MzU3OTk1MzUiDLOmBtghoDKHNgoQ6iqpA3lSSV02bxLVpuVbOY%2FxQCwb2IOjt8Vwhm%2B0U01IT61zzL9wnt2japw1dz96iqEP957vI4foluspwPDegpJriTZsx53r2sMOxu5ftvfbi56owGw%2FMkgQn8uDi4tmQyeNx8o4dZ60J%2BEStXc5ddoF0AvSFUAwNIGW0IymxQaASyWLDH8g0NnCYB0p8KDft4%2FU1R3vS%2FnLtxAW9FFT7NYj7SgU8z6UR35o9FgTdvQnhFVWPmsORT7eJNGMtAN32wTZxBK4yJl9eS29dbv44%2BHNqvKKQ2UxiAgHvBjdXFoCzIM2Nv%2Bnfz0EPkA%2FxanekgiGuyc8fHvZzyyDFUGPkc4N1rNN81If0jPsGV9lZutcqrnGslznx50T70JPRM%2Flaxttp%2BmfBfWLhTVaTt0lvTmB6yGSwzz3i%2FwjVyvWd5AqOEylOv0%2BNcIBknR%2Bg1qm4bSmog9ibqkjEBdvVX7GBw0nIV0vSR7pFhXItRzM9d7hIO5wmyg5IlfELRCDxVxuQkPwbmKuxAx36bbyC9jWe%2BOaVljxID%2B%2F3f4EpGB21hAHk6HY5yyAFsIg44gtMOPS2MEGOt4CNLOAPRNwO6o0S%2F7zgQnKEyh2NCNh3IQjvS%2FhvuAP6Wps%2FotE7mmVoy82WgbTSyBMqF5jYyk57aUvpPX4ebbwP344PqbxUOX6GchiDOeOkH41rnV7g7E9NkW%2BB8Kprx7moRBbjcfb9MKboq7tn%2BvKUEjkshEIpgsCZ8vLLJgkV8flevFNnT8qZyXq%2BDdhkEExoxDf06fKClvOqF1n%2B76mmP5BLjVAj%2Biz4Sjt%2F0yxlVi2UeEiqpcYG8rVXPZXEvUV%2FiD2yP3lslcNEUpTFk3qprIK1fAhJzI5vA9nCJQoZvauJhh8k4FFnw47J1rwWEaa3D0Ritnf8555yx%2FHnUVLnW8ZQczEqLg8d6%2FH63HpijKZEPU%2FLomSQ8Wy2SjQlYpbfQqbwhY4ZeAEeysBlNUmFN0QQ7VJUgyM6v7n72lPuwyKOiSLC6OGwKwt6qEUw4J8a08zE0V1QoMyf9dVoqE%3D&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=ASIA2FX4VGTXRDW374XG%2F20250528%2Fsa-east-1%2Fs3%2Faws4_request&X-Amz-Date=20250528T033322Z&X-Amz-Expires=43200&X-Amz-SignedHeaders=host&X-Amz-Signature=5964cf5dd030a2cc617077f3faeb16fc45bb15625819353c62308df50c3e0c74';
+            video.addEventListener('loadedmetadata', function() {
+                video.play();
+            });
+        }
+    </script>
+</body>
+</html>
