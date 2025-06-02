@@ -30,12 +30,7 @@ SECRET_KEY = config('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = [
-    config('RAILWAY_STATIC_URL', default=''),
-    config('CUSTOM_DOMAIN', default=''),
-    config('SITE_IP', default=''),
-    config('LOCAL_IP', default=''),
-]
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
