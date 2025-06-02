@@ -26,12 +26,7 @@ Feito para a matéria Cloud, Iot e Indústria 4.0 em Python
    pip install -r requirements.txt
     ```
 4. **Configure as variáveis de ambiente em um arquivo .env na raiz do projeto**
-   ```
-    DB_ENGINE = django.db.backends.postgresql
-    DB_NAME= nome_database
-    DB_USER= nome_usuario
-    ...
-    ```
+
 5. **Execute as migracoes e inicie o projeto**
    ```
    python manage.py migrate
