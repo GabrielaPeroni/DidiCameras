@@ -4,8 +4,8 @@ Feito para a matéria Cloud, Iot e Indústria 4.0 em Python
 
 **Requisitos**
 - Python 3.x
-- Banco de dados PostgreSQL (AWS RDS, etc)
-- Credenciais AWS configuradas no arquivo ```.env```
+- Banco de dados PostgreSQL
+- Credenciais configuradas no arquivo ```.env```
 - Django e dependências instaladas [```pip install -r requirements.txt```]
 - Ambiente virtual [recomendado]
 
@@ -19,7 +19,7 @@ Feito para a matéria Cloud, Iot e Indústria 4.0 em Python
 2. **Crie um virtual environment**
    ```bash
     python3 -m venv env
-    env/Scripts/activate.bat
+    venv/Scripts/activate.bat
     ```
 3. **Instale as dependencias**
    ```bash
