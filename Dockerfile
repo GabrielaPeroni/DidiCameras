@@ -20,4 +20,4 @@ RUN apt-get update && apt-get install -y ffmpeg build-essential libpq-dev && apt
 RUN mkdir -p /app/staticfiles
 
 # Run Gunicorn server on Railway's dynamic port
-CMD ["gunicorn", "DidiCameras.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3"]
+CMD gunicorn DidiCameras.wsgi:application --bind 0.0.0.0:${PORT:-8000} --workers 3
