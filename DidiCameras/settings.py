@@ -17,6 +17,9 @@ import dj_database_url
 
 load_dotenv()
 
+# Build paths inside the project like this: BASE_DIR / 'subdir'.
+BASE_DIR = Path(__file__).resolve().parent.parent
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
@@ -90,6 +93,16 @@ DATABASES = {
         default=config('DATABASE_URL')
     )
 }
+
+INSTALLED_APPS += ['storages']
+
+# Cloudflare R2 Storage
+R2_ACCESS_KEY_ID = config('R2_ACCESS_KEY_ID')
+R2_SECRET_ACCESS_KEY = config('R2_SECRET_ACCESS_KEY')
+R2_BUCKET_NAME = config('R2_BUCKET_NAME')
+R2_ENDPOINT_URL = config('R2_ENDPOINT_URL')
+
+DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 
 
 # Password validation

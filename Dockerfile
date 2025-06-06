@@ -1,8 +1,8 @@
 # Use a lightweight Python base image
 FROM python:3.11-slim
 
-# Install ffmpeg and system dependencies
-RUN apt-get update && apt-get install -y ffmpeg build-essential libpq-dev && apt-get clean
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
 
 # Set work directory
 WORKDIR /app
@@ -13,8 +13,11 @@ COPY . /app
 # Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Collect static files (optional: for prod only)
-RUN python manage.py collectstatic --noinput
+# Install ffmpeg and system dependencies
+RUN apt-get update && apt-get install -y ffmpeg build-essential libpq-dev && apt-get clean
+
+# Create staticfiles dir (optional if using collectstatic)
+RUN mkdir -p /app/staticfiles
 
 # Run Gunicorn server on Railway's dynamic port
-CMD ["gunicorn", "DidiCameras.wsgi:application", "--bind", "0.0.0.0:$PORT"]
+CMD ["gunicorn", "DidiCameras.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3"]
