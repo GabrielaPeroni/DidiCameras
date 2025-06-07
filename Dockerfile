@@ -1,11 +1,11 @@
 # Use a lightweight Python base image
 FROM python:3.11-slim
 
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
-
 # Set work directory
 WORKDIR /app
+
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED=1
 
 # Copy project files into the container
 COPY . /app
@@ -20,4 +20,4 @@ RUN apt-get update && apt-get install -y ffmpeg build-essential libpq-dev && apt
 RUN mkdir -p /app/staticfiles
 
 # Run Gunicorn server on Railway's dynamic port
-CMD gunicorn DidiCameras.wsgi:application --bind 0.0.0.0:${PORT:-8000} --workers 3
+CMD ["sh", "-c", "python manage.py migrate && python manage.py collectstatic --noinput && gunicorn DidiCameras.wsgi:application --bind 0.0.0.0:${PORT:-8080} --workers 3 --log-level debug"]
