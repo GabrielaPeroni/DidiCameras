@@ -1,20 +1,26 @@
 const adminButton = document.getElementById('admin-button');
+const userRole = document.getElementById('user-role');
 
 document.addEventListener('keydown', function (e) {
-    if (e.shiftKey && e.key === 'A') {
-        adminButton.style.display = 'block';
+    if (e.shiftKey && e.key.toLowerCase() === 'a') {
+        adminButton.classList.add('visible');
+        adminButton.classList.remove('hidden');
+
+        if (userRole) userRole.textContent = 'Administrador';
     }
 });
 
 document.addEventListener('keyup', function (e) {
-    if (e.key === 'A' || e.key === 'Shift') {
-        adminButton.style.display = 'none';
+    if (e.key.toLowerCase() === 'a' || e.key === 'Shift') {
+        adminButton.classList.remove('visible');
+        adminButton.classList.add('hidden');
+
+        if (userRole) userRole.textContent = 'Visitante';
     }
 });
 
 document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('filter-form');
-
 
     flatpickr('#date', {
         dateFormat: "Y-m-d",
@@ -26,10 +32,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         },
     });
+
     document.getElementById('search').addEventListener('keypress', function (e) {
         if (e.key === 'Enter') {
             form.submit();
         }
     });
 });
-

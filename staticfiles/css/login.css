@@ -1,57 +1,73 @@
-.background-image {
-    background-image: url('../img/abstract-bluish-paint-background-wallpaper.jpg');
-    background-color: rgb(179, 212, 240);
-    background-size: cover;
-    background-position: center;
-    height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Arial', sans-serif;
+    background-color: #fcbf2d;
 }
 
 .login-container {
-    background-color: rgba(255, 255, 255, 0.8);
-    padding: 40px;
-    border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-    width: 300px;
+    width: 100%;
+    max-width: 320px;
+    margin: auto;
+    padding: 30px 20px;
     text-align: center;
 }
 
-h2 {
+.logo {
+    width: 100%;
+    max-width: 720px;
     margin-bottom: 20px;
 }
 
-label {
-    display: block;
-    margin-top: 10px;
+.input-group {
+    position: relative;
+    margin-bottom: 15px;
 }
 
-input[type="text"],
-input[type="password"] {
+.input-group input {
     width: 100%;
-    padding: 10px;
-    margin-top: 5px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-}
-
-button {
-    margin-top: 20px;
-    padding: 10px;
-    background-color: #007BFF;
-    color: white;
+    padding: 10px 35px 10px 10px;
     border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    width: 100%;
+    border-radius: 8px;
+    font-size: 14px;
+    box-sizing: border-box;
 }
 
-button:hover {
-    background-color: #0056b3;
+.input-group .clear-btn {
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    color: #6e2d14;
+    cursor: pointer;
+}
+
+.login-button {
+    width: 100%;
+    padding: 12px;
+    background-color: #4a1e00;
+    color: white;
+    font-weight: bold;
+    font-size: 16px;
+    border: none;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.login-button:hover {
+    background-color: #3b1800;
 }
 
 .error-message {
     color: red;
     margin: 10px 0;
+}
+
+.input-group svg {
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #6e2d14;
 }
