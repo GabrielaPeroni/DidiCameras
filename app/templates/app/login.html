@@ -2,39 +2,40 @@
 
 <!DOCTYPE html>
 <html>
-
 <head>
     <meta charset="UTF-8">
-    <title>Bem vindo a Didi Cameras!</title>
+    <title>Bem vindo a Didi Lanches!</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}">
     <link rel="stylesheet" type="text/css" href="{% static 'css/login.css' %}">
-    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+</head>
 
-    <head>
+<body>
+    <div class="login-container">
+        <img src="{% static 'img/Didi.png' %}" alt="Logo Didi" class="logo">
 
-    <body>
-        <div class="background-image">
-            <div class="login-container">
-                <h2>Bem-vindo!</h2>
-                <h3>Insira dados pessoais agora</h3>
+        {% if error %}
+        <p class="error-message">{{ error }}</p>
+        {% endif %}
 
-                {% if error %}
-                <p class="error-message">{{ error }}</p>
-                {% endif %}
+        <form method="post">
+            {% csrf_token %}
+            <div class="input-group">
+                <input type="text" name="username" placeholder="Email" required>
+            </div>
+            <div class="input-group">
+    <input type="password" name="password" placeholder="Senha" id="password" required>
+    <svg id="togglePassword" xmlns="http://www.w3.org/2000/svg" width="24" height="22" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+        class="lucide lucide-eye">
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+        <circle cx="12" cy="12" r="3"></circle>
+    </svg>
+</div>
 
-                <form method="post">
-                    {% csrf_token %}
-                    <label>Usuário:</label>
-                    <input type="text" name="username" required>
-                    <label>Senha:</label>
-                    <input type="password" id="password" name="password" required>
-                    <label>
-                        <input type="checkbox" id="togglePassword"> Mostrar Senha
-                    </label>
-                    <button type="submit">Login</button>
-                </form>
-                <script src="{% static 'js/login.js' %}"></script>
-    </body>
-
+            <button type="submit" class="login-button">ENTRAR</button>
+        </form>
+    </div>
+    <script src="{% static 'js/login.js' %}"></script>
+</body>
 </html>
+
