@@ -12,11 +12,9 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from app.views import RecordingUploadView
+
 
 urlpatterns = [
     path('manage-system-7359/', admin.site.urls),
     path('', include('app.urls')),
-    path('api/upload_recording/', RecordingUploadView.as_view(), name='upload_recording'),
-    
 ]

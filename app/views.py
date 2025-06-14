@@ -1,14 +1,13 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
-from django.utils.dateparse import parse_date
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from .models import Camera, Recording
-from django.utils import timezone
+
+from django.http import StreamingHttpResponse, HttpResponseNotFound
+from .models import Recording
 from datetime import datetime
 from django.db.models import Q
+import requests
+
 
 def login_view(request):
     if request.method == 'POST':
@@ -22,13 +21,17 @@ def login_view(request):
             return render(request, 'app/login.html', {'error': 'Credenciais Invalidas'})
     return render(request, 'app/login.html')
 
+def logout_view(request):
+    logout(request)
+    return redirect('login')
+
+
 @login_required
 def dashboard_view(request):
     date_filter = request.GET.get('date')
     search_query = request.GET.get('search', '')
     recordings = Recording.objects.select_related('camera')
 
-    # Apply date filter if provided and valid
     if date_filter:
         try:
             parsed_date = datetime.strptime(date_filter, "%Y-%m-%d").date()
@@ -36,36 +39,38 @@ def dashboard_view(request):
         except ValueError:
             pass
 
-    # Apply full search filter
     if search_query:
         recordings = recordings.filter(
             Q(camera__name__icontains=search_query) |
             Q(camera__location__icontains=search_query) |
-            Q(s3_url__icontains=search_query)
+            Q(s3_url__icontains=search_query) |
+            Q(filename__icontains=search_query)
         )
 
-    recordings = recordings.order_by('-timestamp')[:20]
-    return render(request, 'app/dashboard.html', {'recordings': recordings})
+    recordings = recordings.order_by('-timestamp')[:20]  # Show up to 20 most recent
 
-def logout_view(request):
-    logout(request)
-    return redirect('login')
+    return render(request, 'app/dashboard.html', {
+        'recordings': recordings,
+    })
 
-class RecordingUploadView(APIView):
-    def post(self, request):
-        camera_id = request.data.get('camera_id')
-        s3_url = request.data.get('s3_url')
-        recorded_at = request.data.get('recorded_at')
 
-        try:
-            camera = Camera.objects.get(id=camera_id)
-        except Camera.DoesNotExist:
-            return Response({'error': 'Camera not found'}, status=status.HTTP_404_NOT_FOUND)
+@login_required
+def proxy_hls(request, cam_name, path):
+    # Construct the real URL behind the scenes
+    base_url = "https://cams.didicameras.live"
+    full_url = f"{base_url}/{cam_name}/{path}"
 
-        recording = Recording.objects.create(
-            camera=camera,
-            s3_url=s3_url,
-            timestamp=recorded_at or timezone.now()
-        )
+    # Optionally validate cam_name is one of your cams ['cam1', 'cam2', 'cam3']
+    if cam_name not in ['cam1', 'cam2', 'cam3']:
+        return HttpResponseNotFound("Camera not found")
 
-        return Response({'message': 'Recording saved', 'recording_id': recording.id}, status=status.HTTP_201_CREATED)
+    # Stream the response to the client (you can add headers/caching etc)
+    try:
+        r = requests.get(full_url, stream=True, timeout=10)
+        r.raise_for_status()
+    except requests.RequestException:
+        return HttpResponseNotFound("Stream not available")
+
+    # Forward the content-type and stream content
+    response = StreamingHttpResponse(r.iter_content(chunk_size=1024), content_type=r.headers.get('Content-Type', 'application/vnd.apple.mpegurl'))
+    return response

@@ -1,0 +1,129 @@
+from django.core.management.base import BaseCommand
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from DidiCameras import settings
+from app.models import Camera, Recording
+from django.utils import timezone
+from botocore.client import Config
+import os
+import subprocess
+import tempfile
+import boto3
+import django.db.models as models
+from dotenv import load_dotenv
+
+load_dotenv()
+
+THRESHOLD_BYTES = 8 * 1024**3      # 8 GB — try to clean up when exceeding this
+MAX_STORAGE_BYTES = 9.8 * 1024**3  # 9.8 GB — stop uploads beyond this !!
+
+class Command(BaseCommand):
+    help = 'Fetch and convert HLS recordings from all cameras in parallel.'
+
+    def enforce_storage_limit(self):
+        total = Recording.objects.aggregate(total_size=models.Sum('size'))['total_size'] or 0
+        print(f"🗃️ Total storage used: {round(total / 1024**3, 2)} GB")
+
+        if total >= MAX_STORAGE_BYTES:
+            print(f"❌ Storage over hard limit ({round(MAX_STORAGE_BYTES / 1024**3, 2)} GB). Upload denied!")
+            return False
+
+        if total < THRESHOLD_BYTES:
+            return True
+
+        # If between thresholds, try deleting oldest recordings
+        recordings_to_delete = Recording.objects.order_by('timestamp')[:3]
+        if not recordings_to_delete:
+            print("⚠️ No recordings to delete, but storage above threshold.")
+            return True
+
+        s3 = boto3.client(
+            's3',
+            aws_access_key_id=settings.R2_ACCESS_KEY_ID,
+            aws_secret_access_key=settings.R2_SECRET_ACCESS_KEY,
+            endpoint_url=settings.R2_ENDPOINT_URL,
+            region_name='auto',
+            config=Config(signature_version='s3v4'),
+        )
+
+        for rec in recordings_to_delete:
+            try:
+                s3_key = rec.s3_url.split(f"/{settings.R2_BUCKET_NAME}/")[-1]
+                s3.delete_object(Bucket=settings.R2_BUCKET_NAME, Key=s3_key)
+                rec.delete()
+                print(f"🗑️ Deleted recording: {rec.filename}")
+            except Exception as e:
+                print(f"⚠️ Failed to delete recording {rec.filename}: {e}")
+
+        return True  # After cleanup, allow upload
+
+    def handle(self, *args, **options):
+        cameras = Camera.objects.all()
+
+        def process_camera(camera):
+            if not self.enforce_storage_limit():
+                print(f"⛔ Storage limit reached. Skipping recording for {camera.name}")
+                return
+
+            cam_name = camera.name.lower()
+            print(f"\n▶ Starting recording for: {cam_name}")
+            hls_url = f"https://cams.didicameras.live/{cam_name}/index.m3u8"
+
+            try:
+                with tempfile.TemporaryDirectory() as tmpdir:
+                    timestamp = timezone.now().strftime('%Y%m%d_%H%M%S')
+                    filename = f"{cam_name}_{timestamp}.mp4"
+                    output_path = os.path.join(tmpdir, filename)
+
+                    ffmpeg_cmd = [
+                        "ffmpeg",
+                        "-y",
+                        "-i", hls_url,
+                        "-t", "00:05:00",
+                        "-c:v", "libx264",
+                        "-preset", "veryfast",
+                        "-crf", "28",
+                        "-c:a", "aac",
+                        "-b:a", "96k",
+                        output_path
+                    ]
+
+                    process = subprocess.run(ffmpeg_cmd, capture_output=True, text=True, timeout=360)
+                    if process.returncode != 0:
+                        print(f"❌ FFmpeg failed for {cam_name}:\n{process.stderr}")
+                        return
+
+                    size = os.path.getsize(output_path)
+                    print(f"✅ {cam_name}: FFmpeg complete, size {round(size / 1024 / 1024, 2)} MB")
+
+                    s3 = boto3.client(
+                        's3',
+                        aws_access_key_id=settings.R2_ACCESS_KEY_ID,
+                        aws_secret_access_key=settings.R2_SECRET_ACCESS_KEY,
+                        endpoint_url=settings.R2_ENDPOINT_URL,
+                        region_name='auto',
+                        config=Config(signature_version='s3v4'),
+                    )
+
+                    s3_key = f"recordings/{cam_name}/{filename}"
+                    with open(output_path, "rb") as f:
+                        s3.upload_fileobj(f, settings.R2_BUCKET_NAME, s3_key)
+
+                    s3_url = f"{settings.R2_ENDPOINT_URL}/{settings.R2_BUCKET_NAME}/{s3_key}"
+                    Recording.objects.create(
+                        camera=camera,
+                        s3_url=s3_url,
+                        timestamp=timezone.now(),
+                        filename=filename,
+                        size=size,
+                    )
+                    print(f"📥 Saved recording for {cam_name}")
+            except Exception as e:
+                print(f"💥 Error with {cam_name}: {e}")
+
+        # Run all camera recordings in parallel
+        with ThreadPoolExecutor(max_workers=3) as executor:
+            futures = [executor.submit(process_camera, cam) for cam in cameras]
+            for future in as_completed(futures):
+                future.result()
+
+        print("✅ All recordings done.")
