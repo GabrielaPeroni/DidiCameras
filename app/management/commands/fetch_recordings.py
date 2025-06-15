@@ -83,7 +83,7 @@ class Command(BaseCommand):
                     
                     # Timeout should ALWAYS be higher than recording duration, here it's 5+ minutes
                     # ex: if 10 min, timeout = (10 * 60) + 300, bc it's in seconds, so it'll be 900 seconds / 15 min
-                    timeout = (raw_duration * 60) + 300
+                    rec_timeout = (raw_duration * 60) + 300
 
                     ffmpeg_cmd = [
                         "ffmpeg",
@@ -98,7 +98,7 @@ class Command(BaseCommand):
                         output_path
                     ]
 
-                    process = subprocess.run(ffmpeg_cmd, capture_output=True, text=True, timeout=timeout)
+                    process = subprocess.run(ffmpeg_cmd, capture_output=True, text=True, timeout=rec_timeout)
                     if process.returncode != 0:
                         print(f"❌ FFmpeg failed for {cam_name}:\n{process.stderr}")
                         return
