@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from DidiCameras import settings
-from app.models import Camera, Recording
+from app.models import Camera, Recording, FFmpegConfig
 from django.utils import timezone
 from botocore.client import Config
 import os
@@ -13,7 +13,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-THRESHOLD_BYTES = 5 * 1024**3      # 8 GB — try to clean up when exceeding this
+THRESHOLD_BYTES = 5 * 1024**3      # 5 GB — try to clean up when exceeding this
 MAX_STORAGE_BYTES = 9.8 * 1024**3  # 9.8 GB — stop uploads beyond this !!
 
 class Command(BaseCommand):
@@ -31,7 +31,7 @@ class Command(BaseCommand):
             return True
 
         # If between thresholds, try deleting oldest recordings
-        recordings_to_delete = Recording.objects.order_by('timestamp')[:3]
+        recordings_to_delete = Recording.objects.order_by('timestamp')[:3] # :3 owo code
         if not recordings_to_delete:
             print("⚠️ No recordings to delete, but storage above threshold.")
             return True
@@ -58,6 +58,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         cameras = Camera.objects.all()
+        ff_config = FFmpegConfig.objects.first()
 
         def process_camera(camera):
             if not self.enforce_storage_limit():
@@ -73,12 +74,22 @@ class Command(BaseCommand):
                     timestamp = timezone.now().strftime('%Y%m%d_%H%M%S')
                     filename = f"{cam_name}_{timestamp}.mp4"
                     output_path = os.path.join(tmpdir, filename)
+                    raw_duration = ff_config.recording_duration if ff_config else 5
+
+                    hours = raw_duration // 60
+                    mins = raw_duration % 60
+                    secs = 0
+                    rec_duration = f"{hours:02}:{mins:02}:{secs:02}"
+                    
+                    # Timeout should ALWAYS be higher than recording duration, here it's 5+ minutes
+                    # ex: if 10 min, timeout = (10 * 60) + 300, bc it's in seconds, so it'll be 900 seconds / 15 min
+                    timeout = (raw_duration * 60) + 300
 
                     ffmpeg_cmd = [
                         "ffmpeg",
                         "-y",
                         "-i", hls_url,
-                        "-t", "00:05:00",
+                        "-t", rec_duration,
                         "-c:v", "libx264",
                         "-preset", "veryfast",
                         "-crf", "28",
@@ -87,7 +98,7 @@ class Command(BaseCommand):
                         output_path
                     ]
 
-                    process = subprocess.run(ffmpeg_cmd, capture_output=True, text=True, timeout=360)
+                    process = subprocess.run(ffmpeg_cmd, capture_output=True, text=True, timeout=timeout)
                     if process.returncode != 0:
                         print(f"❌ FFmpeg failed for {cam_name}:\n{process.stderr}")
                         return
