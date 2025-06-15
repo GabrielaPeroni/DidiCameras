@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 from dotenv import load_dotenv
 from decouple import config
+from datetime import timedelta
 import dj_database_url
 
 load_dotenv()
@@ -86,7 +87,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'DidiCameras.wsgi.application'
+WSGI_APPLICATION = 'DidiCameras.wsgi.application' # WYSI??? :O 727
 
 LOGIN_URL = '/'
 LOGIN_REDIRECT_URL = '/dashboard/'
@@ -109,6 +110,13 @@ R2_BUCKET_NAME = config('R2_BUCKET_NAME')
 R2_ENDPOINT_URL = config('R2_ENDPOINT_URL')
 
 DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+
+# AXES Configuration
+AXES_FAILURE_LIMIT = 5
+AXES_RESET_ON_SUCCESS = True
+AXES_LOCKOUT_PARAMETERS = ["ip_address", "username"]
+AXES_COOLOFF_TIME = timedelta(minutes=15) # Will let you try again after that time -- If it's too low, change for production
+# If you get bricked, use 'python manage.py axes_reset' to unlock
 
 
 # Password validation
