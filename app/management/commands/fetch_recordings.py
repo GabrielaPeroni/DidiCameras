@@ -13,7 +13,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-THRESHOLD_BYTES = 8 * 1024**3      # 8 GB — try to clean up when exceeding this
+THRESHOLD_BYTES = 5 * 1024**3      # 8 GB — try to clean up when exceeding this
 MAX_STORAGE_BYTES = 9.8 * 1024**3  # 9.8 GB — stop uploads beyond this !!
 
 class Command(BaseCommand):
