@@ -112,7 +112,7 @@ R2_ENDPOINT_URL = config('R2_ENDPOINT_URL')
 DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 
 # AXES Configuration
-AXES_FAILURE_LIMIT = 5
+AXES_FAILURE_LIMIT = 10
 AXES_RESET_ON_SUCCESS = True
 AXES_LOCKOUT_PARAMETERS = ["ip_address", "username"]
 AXES_COOLOFF_TIME = timedelta(minutes=15) # Will let you try again after that time -- If it's too low, change for production
