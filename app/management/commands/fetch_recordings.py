@@ -31,7 +31,7 @@ class Command(BaseCommand):
             return True
 
         # If between thresholds, try deleting oldest recordings
-        recordings_to_delete = Recording.objects.order_by('timestamp')[:3] # :3 owo code
+        recordings_to_delete = Recording.objects.order_by('timestamp')[:2]
         if not recordings_to_delete:
             print("⚠️ No recordings to delete, but storage above threshold.")
             return True
