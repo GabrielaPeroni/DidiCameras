@@ -128,11 +128,7 @@
     </div>
 
     <div class="video-button">
-      {% if rec.s3_url %}
-        <a href="{{ rec.s3_url }}" class="play-button" target="_blank">▶ Ver Vídeo</a>
-      {% else %}
         <a class="play-button disabled">Nenhum arquivo</a>
-      {% endif %}
     </div>
   </div>
   {% empty %}
