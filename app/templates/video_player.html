@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ recording.camera.name }} - {{ recording.timestamp|date:"d/m/Y H:i" }}</title>
+    <style>
+        /* Keep your existing styles */
+        .recording-info {
+            padding: 15px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #eee;
+        }
+        .info-row {
+            display: flex;
+            margin-bottom: 8px;
+        }
+        .info-label {
+            font-weight: bold;
+            width: 100px;
+        }
+    </style>
+</head>
+<body>
+    <div class="player-container">
+        <div class="recording-info">
+            <div class="info-row">
+                <span class="info-label">Câmera:</span>
+                <span>{{ recording.camera.name }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Local:</span>
+                <span>{{ recording.camera.location }}</span>  <!-- This will now use the predefined location -->
+            </div>
+            <div class="info-row">
+                <span class="info-label">Data:</span>
+                <span class="value">{{ recording.timestamp|date:"d/m/Y" }}</span>
+            </div>
+            {% if recording.duration %}
+            <div class="info-row">
+                <span class="info-label">Duração:</span>
+                <span class="value">{{ recording.duration|floatformat }} segundos</span>
+            </div>
+            {% endif %}
+        </div>
+        
+        <video controls autoplay>
+            <source src="{{ video_url }}" type="video/mp4">
+            Seu navegador não suporta vídeos HTML5.
+        </video>
+        
+        <div class="player-footer">
+            <a href="{% url 'dashboard' %}" class="back-button">← Voltar para lista</a>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,4 +1,5 @@
-from django.shortcuts import render, redirect
+from urllib.parse import unquote
+from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 
@@ -18,8 +19,8 @@ def login_view(request):
             login(request, user)
             return redirect('dashboard')
         else:
-            return render(request, 'app/login.html', {'error': 'Credenciais Invalidas'})
-    return render(request, 'app/login.html')
+            return render(request, 'login.html', {'error': 'Credenciais Invalidas'})
+    return render(request, 'login.html')
 
 def logout_view(request):
     logout(request)
@@ -49,7 +50,7 @@ def dashboard_view(request):
 
     recordings = recordings.order_by('-timestamp')[:20]  # Show up to 20 most recent
 
-    return render(request, 'app/dashboard.html', {
+    return render(request, 'dashboard.html', {
         'recordings': recordings,
     })
 
@@ -74,3 +75,21 @@ def proxy_hls(request, cam_name, path):
     # Forward the content-type and stream content
     response = StreamingHttpResponse(r.iter_content(chunk_size=1024), content_type=r.headers.get('Content-Type', 'application/vnd.apple.mpegurl'))
     return response
+
+@login_required
+def recording_detail(request, camera_id, recording_id):
+    recording = get_object_or_404(
+        Recording.objects.select_related('camera'),
+        camera__name__iexact=camera_id,
+        id=recording_id
+    )
+    
+    if not recording.s3_url:
+        return render(request, 'video_error.html', {
+            'error': 'Este vídeo não está mais disponível'
+        }, status=404)
+    
+    return render(request, 'video_player.html', {
+        'recording': recording,  # Pass the full recording object
+        'video_url': recording.public_direct_url
+    })
