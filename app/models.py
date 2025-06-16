@@ -45,4 +45,18 @@ class Recording(models.Model):
 
     def __str__(self):
         return f"{self.camera.name} - {self.timestamp.strftime('%d-%m-%Y %H:%M')}"
+
+class FFmpegConfig(models.Model):
+    recording_duration = models.PositiveIntegerField(default=5) # Minutes by default
+
+    class Meta:
+        verbose_name = "FFmpeg Config"
+        verbose_name_plural = "FFmpeg Configs"
+
+    def save(self, *args, **kwargs):
+        # We round to save only integers to db
+        self.recording_duration = max(int(round(self.recording_duration)), 1)  # 1 is for minimum value
+        super().save(*args, **kwargs)
     
+    def __str__(self):
+        return f"Recording Duration: {self.recording_duration} minutes / More future configs coming"
