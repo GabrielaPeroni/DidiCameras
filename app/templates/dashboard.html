@@ -80,7 +80,6 @@
   <div class="main-content">
     <h1>Gravações Recentes</h1>
     <p>Monitore e acesse as gravações das suas câmeras de segurança</p>
-
     <form method="get" id="filter-form" class="filter-bar">
         <div class="filter-group">
           <label for="search">Pesquisar</label>
@@ -100,41 +99,43 @@
           </div>
         </div>
       </form>
-
-<div class="recordings-grid">
-  {% for rec in recordings %}
-  <div class="recording-card">
-    <div class="recording-header">
-      <div class="icon-title">
-        <svg xmlns="http://www.w3.org/2000/svg" width="25" height="22" color="black" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-camera">
-          <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"></path>
-          <circle cx="12" cy="13" r="3"></circle>
-        </svg>
-        <div>
-          <div class="camera-id">{{ rec.camera.name }}</div>
-          <div class="location">{{ rec.camera.location }}</div>
+    <div class="recordings-grid">
+      {% for rec in recordings %}
+      <div class="recording-card">
+        <div class="recording-header">
+          <div class="icon-title">
+            <svg xmlns="http://www.w3.org/2000/svg" width="25" height="22" color="black" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-camera">
+              <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"></path>
+              <circle cx="12" cy="13" r="3"></circle>
+            </svg>
+            <div>
+              <div class="camera-id">{{ rec.camera.name }}</div>
+              <div class="location">{{ rec.camera.location }}</div>
+            </div>
+          </div>
+          <div class="status-dot {% if rec.camera.online %}online{% else %}offline{% endif %}"></div>
         </div>
+
+        <div class="recording-info">
+          <span class="label">Data:</span>
+          <span class="value">{{ rec.timestamp|date:"d/m/Y" }}</span>
+        </div>
+        <div class="recording-info">
+          <span class="label">Horário:</span>
+          <span class="value">{{ rec.timestamp|date:"H:i" }}</span>
+        </div>
+          <div class="video-button">
+            {% if rec.s3_url %}
+              <a href="{{ rec.friendly_url }}" class="play-button">Assistir</a>
+            {% else %}
+              <a class="play-button disabled">Nenhum arquivo</a>
+            {% endif %}
+          </div>
       </div>
-      <div class="status-dot {% if rec.camera.online %}online{% else %}offline{% endif %}"></div>
+      {% empty %}
+      <div class="no-recordings">Nenhuma gravação encontrada.</div>
+      {% endfor %}
     </div>
-
-    <div class="recording-info">
-      <span class="label">Data:</span>
-      <span class="value">{{ rec.timestamp|date:"d/m/Y" }}</span>
-    </div>
-    <div class="recording-info">
-      <span class="label">Horário:</span>
-      <span class="value">{{ rec.timestamp|date:"H:i" }}</span>
-    </div>
-
-    <div class="video-button">
-        <a class="play-button disabled">Nenhum arquivo</a>
-    </div>
-  </div>
-  {% empty %}
-  <div class="no-recordings">Nenhuma gravação encontrada.</div>
-  {% endfor %}
-</div>
 
     <div class="admin-button hidden" id="admin-button">
       <div>

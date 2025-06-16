@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils.text import slugify
 
 class Camera(models.Model):
     name = models.CharField(max_length=100)
@@ -18,5 +19,21 @@ class Recording(models.Model):
     size = models.BigIntegerField(null=True, blank=True)  # bytes
     filename = models.CharField(max_length=255, blank=True)
 
+    @property  
+    def public_direct_url(self):
+        """Direct URL to the video file (no player page)"""
+        if not self.s3_url:
+            return ""
+        path_parts = self.s3_url.split('/bucket-recordings/')
+        if len(path_parts) > 1:
+            return f"https://recordings.didicameras.live/{path_parts[1].strip('/')}"
+        return ""
+    
+    @property
+    def friendly_url(self):
+        """Clean URL like /cam1/17/"""
+        return f"/{self.camera.name.lower()}/{self.id}/"
+
     def __str__(self):
         return f"{self.camera.name} - {self.timestamp.strftime('%d-%m-%Y %H:%M')}"
+    
