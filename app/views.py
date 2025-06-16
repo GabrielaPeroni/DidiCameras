@@ -90,5 +90,6 @@ def recording_detail(request, camera_id, recording_id):
         }, status=404)
     
     return render(request, 'video_player.html', {
+        'recording': recording,  # Pass the full recording object
         'video_url': recording.public_direct_url
     })

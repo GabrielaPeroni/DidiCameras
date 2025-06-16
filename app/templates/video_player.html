@@ -29,12 +29,18 @@
             </div>
             <div class="info-row">
                 <span class="info-label">Local:</span>
-                <span>{{ recording.camera.location }}</span>
+                <span>{{ recording.camera.location }}</span>  <!-- This will now use the predefined location -->
             </div>
             <div class="info-row">
                 <span class="info-label">Data:</span>
-                <span>{{ recording.timestamp|date:"d/m/Y H:i" }}</span>
+                <span class="value">{{ recording.timestamp|date:"d/m/Y" }}</span>
             </div>
+            {% if recording.duration %}
+            <div class="info-row">
+                <span class="info-label">Duração:</span>
+                <span class="value">{{ recording.duration|floatformat }} segundos</span>
+            </div>
+            {% endif %}
         </div>
         
         <video controls autoplay>
@@ -43,7 +49,7 @@
         </video>
         
         <div class="player-footer">
-            <a href="/" class="back-button">← Voltar para lista</a>
+            <a href="{% url 'dashboard' %}" class="back-button">← Voltar para lista</a>
         </div>
     </div>
 </body>
