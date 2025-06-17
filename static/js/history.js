@@ -39,3 +39,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
+
+function filterCameras() {
+    const selected = document.getElementById('cameraFilter').value;
+    const blocks = document.querySelectorAll('.camera-block');
+    blocks.forEach(block => {
+        if (selected === 'all' || block.dataset.camera === selected) {
+            block.style.display = 'block';
+        } else {
+            block.style.display = 'none';
+        }
+    });
+}
