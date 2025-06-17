@@ -39,3 +39,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
+
+function filterByCamera() {
+    const selected = document.getElementById("cameraDropdown").value;
+    const cards = document.querySelectorAll(".recording-card");
+
+    cards.forEach(card => {
+      if (selected === "all" || card.classList.contains(selected)) {
+        card.style.display = "block";
+      } else {
+        card.style.display = "none";
+      }
+    });
+  }

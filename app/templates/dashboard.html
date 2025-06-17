@@ -94,6 +94,7 @@
   </div>
 
   <div class="main-content">
+
   </div>
 
     <div class="admin-button hidden" id="admin-button">
@@ -102,6 +103,81 @@
         Gerencie o sistema e configurações avançadas
       </div>
       <a href="/manage-system-7359/">Acessar</a>
+
+    <h1>Gravações Recentes</h1>
+    <p>Monitore e acesse as gravações das suas câmeras de segurança</p>
+
+    <!-- Filtros -->
+    <form method="get" id="filter-form" class="filter-bar">
+      <div class="filter-group">
+        <label for="search">Pesquisar</label>
+        <div class="input-icon-wrapper">
+          <span>🔍</span>
+          <input type="text" id="search" name="search" placeholder="Buscar por câmera ou local..."
+            value="{{ request.GET.search|default:'' }}">
+        </div>
+      </div>
+
+      <div class="filter-group date-group">
+        <label for="date">Data</label>
+        <div class="input-icon-wrapper">
+          <span>📅</span>
+          <input type="text" id="date" name="date" class="flatpickr-input" placeholder="dd/mm/aaaa"
+            value="{{ request.GET.date|default:'' }}">
+        </div>
+      </div>
+    </form>
+
+    <!-- Dropdown para selecionar a câmera -->
+    <div class="dropdown-wrapper">
+      <select id="cameraDropdown" class="dropdown" onchange="filterByCamera()">
+        <option value="all">Todas as câmeras</option>
+        {% for camera in cameras %}
+        <option value="cam{{ camera.id }}">Câmera {{ camera.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Cards de gravações -->
+    <div class="recordings-grid" id="recordingsGrid">
+      {% for rec in recordings %}
+      <div class="recording-card cam{{ rec.camera.id }}">
+        <div class="recording-header">
+          <div class="icon-title">
+            <!-- SVG ícone -->
+            <svg xmlns="http://www.w3.org/2000/svg" width="25" height="22" fill="none" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" />
+              <circle cx="12" cy="13" r="3" />
+            </svg>
+            <div>
+              <div class="camera-id">{{ rec.camera.name }}</div>
+              <div class="location">{{ rec.camera.location }}</div>
+            </div>
+          </div>
+          <div class="status-dot {% if rec.camera.online %}online{% else %}offline{% endif %}"></div>
+        </div>
+
+        <div class="recording-info">
+          <span class="label">Data:</span>
+          <span class="value">{{ rec.timestamp|date:"d/m/Y" }}</span>
+        </div>
+        <div class="recording-info">
+          <span class="label">Horário:</span>
+          <span class="value">{{ rec.timestamp|date:"H:i" }}</span>
+        </div>
+        <div class="video-button">
+          {% if rec.s3_url %}
+          <a href="{{ rec.friendly_url }}" class="play-button">Assistir</a>
+          {% else %}
+          <a class="play-button disabled">Nenhum arquivo</a>
+          {% endif %}
+        </div>
+      </div>
+      {% empty %}
+      <div class="no-recordings">Nenhuma gravação encontrada.</div>
+      {% endfor %}
+
     </div>
   </div>
 
