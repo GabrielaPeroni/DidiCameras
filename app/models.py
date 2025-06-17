@@ -11,12 +11,17 @@ class Camera(models.Model):
     
     name = models.CharField(max_length=100)
     location = models.CharField(max_length=200, blank=True, null=True)
+    live_url = models.URLField(default="") # Path to RTC
     is_active = models.BooleanField(default=True)
 
     @property
     def location(self):
         return self.CAMERA_LOCATIONS.get(self.name.lower(), 'Local Desconhecido')
-
+    
+    @property
+    def live_url(self):
+        return f"rtc.didicameras.live/{self.name.lower()}"
+    
     def __str__(self):
         return f"{self.name} ({self.location})"
 
