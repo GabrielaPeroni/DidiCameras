@@ -143,7 +143,7 @@
 
         <div class="video-button">
           {% if cam.live_url %}
-          <a href="https://{{ cam.live_url }}" class="play-button">Abrir Live</a>
+          <a href="#" class="play-button" data-live-url="https://{{ cam.live_url }}">Abrir Live</a>
           {% else %}
           <a class="play-button disabled">Nenhum Link</a>
           {% endif %}
@@ -152,6 +152,12 @@
       {% empty %}
       <div class="no-recordings">Nenhuma gravação encontrada.</div>
       {% endfor %}
+    </div>
+  </div>
+
+  <div class="video-modal">
+    <div class="video-modal-content">
+      <iframe id="webrtcFrame" src="" frameborder="0" allowfullscreen></iframe>
     </div>
   </div>
 

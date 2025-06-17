@@ -40,6 +40,32 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
+document.addEventListener('DOMContentLoaded', function () {
+    const modal = document.querySelector('.video-modal');
+    const iframe = document.getElementById('webrtcFrame');
+  
+    document.querySelectorAll('.play-button').forEach(function (button) {
+      if (!button.classList.contains('disabled')) {
+        button.addEventListener('click', function (event) {
+          event.preventDefault();
+          const liveUrl = button.getAttribute('data-live-url');
+          if (liveUrl) {
+            iframe.src = liveUrl;
+            modal.classList.add('active');
+          }
+        });
+      }
+    });
+  
+    modal.addEventListener('click', function (e) {
+      if (!e.target.closest('.video-modal-content')) {
+        modal.classList.remove('active');
+        iframe.src = ''; // Limpa o iframe ao fechar
+      }
+    });
+  });
+  
+
 function filterByCamera() {
     const selected = document.getElementById("cameraDropdown").value;
     const cards = document.querySelectorAll(".recording-card");

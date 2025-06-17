@@ -328,3 +328,46 @@ body {
   cursor: not-allowed;
   pointer-events: none;
 }
+
+.video-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6); /* fundo escuro com transparência */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+  z-index: 9999;
+}
+
+.video-modal.active {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.video-modal-content {
+  background-color: #000;
+  border-radius: 8px;
+  max-width: 70%;
+  max-height: 70%;
+  overflow: hidden;
+  transform: scale(0.8);
+  transition: transform 0.3s ease;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+}
+
+.video-modal.active .video-modal-content {
+  transform: scale(1);
+}
+
+.video-modal-content video {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+}
