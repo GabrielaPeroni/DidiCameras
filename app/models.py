@@ -25,9 +25,10 @@ class Recording(models.Model):
 class FFmpegConfig(models.Model):
     recording_duration = models.PositiveIntegerField(default=5) # Minutes
     recording_resolution = models.CharField(max_length=11, blank=True) # Use's videos native resolution if not specified/blank
-    recording_format = models.CharField(max_length=4, blank=True) # Same as above for mp4, DO NOT INCLUDE . IN DB!!
+    recording_format = models.CharField(max_length=4, blank=True) # Same as above for mp4, DO NOT INCLUDE . (dot) IN DB!!
+    recording_preset = models.CharField(max_length=12, default='veryfast')
     # Validator below to limit bitrate usage, god please have mercy on our DBs
-    recording_bitrate = models.PositiveSmallIntegerField(default=28, validators=[MaxValueValidator(32)])
+    recording_crf = models.PositiveSmallIntegerField(default=28, validators=[MaxValueValidator(32)])
     
 
     class Meta:
@@ -37,8 +38,8 @@ class FFmpegConfig(models.Model):
     def save(self, *args, **kwargs):
         # We round to save only integers to db
         self.recording_duration = max(int(round(self.recording_duration)), 1)  # 1 is for minimum value
-        self.recording_bitrate = max(int(round(self.recording_bitrate)), 18) # Less than 18 would make each files be tooooo big (>w>)
+        self.recording_crf = max(int(round(self.recording_bitrate)), 18) # Less than 18 would make each files be tooooo big (>w>)
         super().save(*args, **kwargs)
     
     def __str__(self):
-        return f"Saved FFmpeg Recording Configuration - Duration: {self.recording_duration} minutes | Resolution: {self.recording_resolution} | Bitrate: {self.recording_bitrate} | Format: {self.recording_format}"
+        return f"Saved FFmpeg Configuration - Duration: {self.recording_duration} minutes | Resolution: {self.recording_resolution} | Preset: {self.recording_preset} | CRF: {self.recording_crf} | Format: {self.recording_format}"
