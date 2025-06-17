@@ -2,7 +2,7 @@ const adminButton = document.getElementById('admin-button');
 const userRole = document.getElementById('user-role');
 
 document.addEventListener('keydown', function (e) {
-    if (e.shiftKey && e.key.toLowerCase() === 'a') {
+    if (e.shiftKey && e.key.toLowerCase() === 'f') {
         adminButton.classList.add('visible');
         adminButton.classList.remove('hidden');
 
