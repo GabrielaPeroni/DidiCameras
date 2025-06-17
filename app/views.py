@@ -4,7 +4,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 
 from django.http import StreamingHttpResponse, HttpResponseNotFound
-from .models import Recording
+from .models import Recording, Camera
 from datetime import datetime
 from django.db.models import Q
 import requests
@@ -52,6 +52,7 @@ def dashboard_view(request):
 
     return render(request, 'dashboard.html', {
         'recordings': recordings,
+        'cameras': Camera.objects.all(),
     })
 
 @login_required
