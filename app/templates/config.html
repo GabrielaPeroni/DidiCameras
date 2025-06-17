@@ -1,0 +1,187 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <title>DidiLanches - Configurações</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" type="text/css" href="{% static 'css/config.css' %}">
+</head>
+
+<body>
+    <div class="sidebar">
+        <div>
+            <div class="logo">
+                <div class="logo-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="25" height="22" color="black" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="lucide lucide-camera">
+                        <path
+                            d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z">
+                        </path>
+                        <circle cx="12" cy="13" r="3"></circle>
+                    </svg>
+                </div>
+                <div class="logo-text">
+                    <div class="logo-title">Didi<span style="color: #facc15;">Lanches</span></div>
+                    <div class="logo-subtitle">Monitoramento</div>
+                </div>
+            </div>
+
+            <nav>
+                <a href="{% url 'dashboard' %}">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="25" height="20" fill="none" stroke="currentColor"
+                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-video">
+                        <path d="M22 8l-6 4 6 4V8z"></path>
+                        <rect x="2" y="6" width="14" height="12" rx="2" ry="2"></rect>
+                    </svg>
+                    <span>Câmeras</span>
+                </a>
+                <a href="{% url 'history' %}">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="none" stroke="currentColor"
+                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-history">
+                        <path d="M3 3v5h5"></path>
+                        <path d="M3.05 13a9 9 0 1 0 .5-4.5L3 8"></path>
+                        <path d="M12 7v5l4 2"></path>
+                    </svg>
+                    <span>Historico</span>
+                </a>
+                <a href="{% url 'config' %}">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="none" stroke="currentColor"
+                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-settings">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path
+                            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c0 .7.4 1.3 1.01 1.58a1.65 1.65 0 0 0 1.51 0H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z">
+                        </path>
+                    </svg>
+                    <span>Configurações</span>
+                </a>
+            </nav>
+        </div>
+
+        <div class="user-footer">
+            <div class="user-info">
+                <div class="user-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="23" height="20" fill="none" stroke="currentColor"
+                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user">
+                        <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                </div>
+                <div>
+                    <div class="user-name">Olá, {{ request.user.username }}!</div>
+                    <small class="user-role" id="user-role">Visitante</small>
+                </div>
+            </div>
+            <a href="{% url 'logout' %}" class="logout">
+                <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="none" stroke="currentColor"
+                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-log-out">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                    <polyline points="16 17 21 12 16 7"></polyline>
+                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                </svg>
+                <span>Sair</span>
+            </a>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="header-box">
+            <div>
+                <h1>Configurações do Sistema</h1>
+                <p>Personalize as configurações de gravação e monitoramento
+                    do DidiLanches</p>
+            </div>
+            <div class="status">Sistema Online</div>
+        </div>
+
+        <div class="settings-container">
+            <div class="left-column">
+                <div class="section">
+                    <h2>Configurações de Gravação</h2>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Duração</label>
+                            <select>
+                                <option>30 segundos</option>
+                                <option>1 minuto</option>
+                                <option>5 minutos</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Resolução</label>
+                            <select>
+                                <option>Baixa</option>
+                                <option>Média</option>
+                                <option>Alta</option>
+                                <option>Nativa</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Formato</label>
+                            <select>
+                                <option>MP4</option>
+                                <option>AVI</option>
+                                <option>MKV</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Compressão</label>
+                            <select>
+                                <option>Baixa</option>
+                                <option>Média</option>
+                                <option>Alta</option>
+                            </select>
+                        </div>
+
+                    </div>
+                </div>
+                <div class="section">
+                    <h2>Recursos Avançados</h2>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Detecção de Movimento</label>
+                            <div class="disable">Desativado</div>
+                        </div>
+                        <div class="form-group">
+                            <label>Salvar Automaticamente?</label>
+                            <select>
+                                <option>Sim</option>
+                                <option>Não</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Nome do Arquivo</label>
+                            <input type="text" placeholder="camera_{camera}_{date}_{time}">
+                            <small>Use: {camera}, {date}, {time}</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="right-column">
+                <div class="summary-box">
+                    <strong>Resumo</strong><br>
+                    Qualidade: <span class="highlight">Alta</span><br>
+                    Duração: <span class="highlight">30s</span><br>
+                    Formato: <span class="highlight">MP4</span><br>
+                    Tamanho estimado: <span class="text-yellow">~10MB</span>
+                </div>
+                <div class="status-box">
+                    <strong>Status do Sistema</strong><br>
+                    Espaço Livre: <span class="text-green">2.4 TB</span><br>
+                    Câmeras Ativas: <span class="highlight">3/4</span><br>
+                    Última Gravação: <span class="highlight">14:30</span>
+                </div>
+                <button class="button save">Salvar Configurações</button>
+                <button class="button reset">Restaurar Padrão</button>
+            </div>
+        </div>
+    </div>
+</body>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="{% static 'js/config.js' %}"></script>
+
+</html>

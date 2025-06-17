@@ -54,6 +54,60 @@ def dashboard_view(request):
         'recordings': recordings,
     })
 
+@login_required
+def history_view(request):
+    date_filter = request.GET.get('date')
+    search_query = request.GET.get('search', '')
+    recordings = Recording.objects.select_related('camera')
+
+    if date_filter:
+        try:
+            parsed_date = datetime.strptime(date_filter, "%Y-%m-%d").date()
+            recordings = recordings.filter(timestamp__date=parsed_date)
+        except ValueError:
+            pass
+
+    if search_query:
+        recordings = recordings.filter(
+            Q(camera__name__icontains=search_query) |
+            Q(camera__location__icontains=search_query) |
+            Q(s3_url__icontains=search_query) |
+            Q(filename__icontains=search_query)
+        )
+
+    recordings = recordings.order_by('-timestamp')[:20]  # Show up to 20 most recent
+
+    return render(request, 'history.html', {
+        'recordings': recordings,
+    })
+
+@login_required
+def config_view(request):
+    date_filter = request.GET.get('date')
+    search_query = request.GET.get('search', '')
+    recordings = Recording.objects.select_related('camera')
+
+    if date_filter:
+        try:
+            parsed_date = datetime.strptime(date_filter, "%Y-%m-%d").date()
+            recordings = recordings.filter(timestamp__date=parsed_date)
+        except ValueError:
+            pass
+
+    if search_query:
+        recordings = recordings.filter(
+            Q(camera__name__icontains=search_query) |
+            Q(camera__location__icontains=search_query) |
+            Q(s3_url__icontains=search_query) |
+            Q(filename__icontains=search_query)
+        )
+
+    recordings = recordings.order_by('-timestamp')[:20]  # Show up to 20 most recent
+
+    return render(request, 'config.html', {
+        'recordings': recordings,
+    })
+
 
 @login_required
 def proxy_hls(request, cam_name, path):
