@@ -1,14 +1,24 @@
 from django.core.validators import MaxValueValidator
 from django.db import models
+from django.utils.text import slugify
 
 class Camera(models.Model):
+    CAMERA_LOCATIONS = {
+        'cam1': 'Entrada',
+        'cam2': 'Interior da Loja',
+        'cam3': 'Cozinha',
+    }
+    
     name = models.CharField(max_length=100)
     location = models.CharField(max_length=200, blank=True, null=True)
     is_active = models.BooleanField(default=True)
-    stream_url = models.URLField(blank=True, null=True)  # NEW FIELD
+
+    @property
+    def location(self):
+        return self.CAMERA_LOCATIONS.get(self.name.lower(), 'Local Desconhecido')
 
     def __str__(self):
-        return self.name
+        return f"{self.name} ({self.location})"
 
 
 class Recording(models.Model):
@@ -18,6 +28,21 @@ class Recording(models.Model):
     duration = models.FloatField(null=True, blank=True)  # seconds
     size = models.BigIntegerField(null=True, blank=True)  # bytes
     filename = models.CharField(max_length=255, blank=True)
+
+    @property  
+    def public_direct_url(self):
+        """Direct URL to the video file (no player page)"""
+        if not self.s3_url:
+            return ""
+        path_parts = self.s3_url.split('/bucket-recordings/')
+        if len(path_parts) > 1:
+            return f"https://recordings.didicameras.live/{path_parts[1].strip('/')}"
+        return ""
+    
+    @property
+    def friendly_url(self):
+        """Clean URL like /cam1/17/"""
+        return f"/{self.camera.name.lower()}/{self.id}/"
 
     def __str__(self):
         return f"{self.camera.name} - {self.timestamp.strftime('%d-%m-%Y %H:%M')}"

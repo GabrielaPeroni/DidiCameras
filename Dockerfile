@@ -17,7 +17,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 RUN apt-get update && apt-get install -y ffmpeg build-essential libpq-dev && apt-get clean
 
 # Create staticfiles dir (optional if using collectstatic)
-RUN mkdir -p /app/staticfiles
+RUN rm -rf /app/staticfiles && mkdir -p /app/staticfiles
 
 # Run Gunicorn server on Railway's dynamic port
-CMD ["sh", "-c", "python manage.py migrate && python manage.py collectstatic --noinput && gunicorn DidiCameras.wsgi:application --bind 0.0.0.0:${PORT:-8080} --workers 3 --log-level debug"]
+CMD ["sh", "-c", "python manage.py migrate && rm -rf /app/staticfiles && python manage.py collectstatic --noinput && gunicorn DidiCameras.wsgi:application --bind 0.0.0.0:${PORT:-8080} --workers 3 --log-level debug"]
+
