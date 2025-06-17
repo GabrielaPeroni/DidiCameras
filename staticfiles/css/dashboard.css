@@ -118,46 +118,56 @@ body {
       margin-bottom: 10px;
     }
 
-    .filter-bar {
-      background-color: white;
-      padding: 20px;
-      border-radius: 10px;
-      margin-bottom: 20px;
-      display: flex;
-      gap: 20px;
-      align-items: flex-start;
-      border: 1px solid #eee;
-    }
+.filter-bar {
+  background-color: white;
+  padding: 20px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  border: 1px solid #eee;
+}
 
-    .filter-group {
-      flex: 1;
-    }
+.filter-group {
+  flex: 1;
+}
 
-    .filter-group label {
-      display: block;
-      font-size: 13px;
-      color: #333;
-      margin-bottom: 5px;
-    }
+.filter-group label {
+  display: block;
+  font-size: 13px;
+  color: #333;
+  margin-bottom: 5px;
+}
 
-    .filter-group .input-icon-wrapper {
-      position: relative;
-    }
+.filter-group .input-icon-wrapper {
+  position: relative;
+}
 
-    .filter-group .input-icon-wrapper span {
-      position: absolute;
-      top: 50%;
-      left: 10px;
-      transform: translateY(-50%);
-      color: #aaa;
-    }
+.filter-group .input-icon-wrapper span {
+  position: absolute;
+  top: 50%;
+  left: 10px;
+  transform: translateY(-50%);
+  color: #aaa;
+}
 
-    .filter-group input {
-      width: 100%;
-      padding: 10px 10px 10px 35px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-    }
+.filter-group input {
+  width: 100%;
+  max-width: 95%;
+  padding: 10px 10px 10px 35px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+
+.filter-group.date-group {
+  flex: 0 0 auto;
+}
+
+.filter-group.date-group input {
+  width: 120px;
+}
+
 
     table {
       width: 100%;
