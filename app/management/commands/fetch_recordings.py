@@ -69,17 +69,23 @@ class Command(BaseCommand):
             print(f"\n▶ Starting recording for: {cam_name}")
             hls_url = f"https://cams.didicameras.live/{cam_name}/index.m3u8"
 
+            rec_format = ff_config.recording_format if ff_config else 'mp4'
+            rec_resolution = ff_config.recording_resolution
+
             try:
                 with tempfile.TemporaryDirectory() as tmpdir:
                     timestamp = timezone.now().strftime('%Y%m%d_%H%M%S')
-                    filename = f"{cam_name}_{timestamp}.mp4"
+                    filename = f"{cam_name}_{timestamp}.{rec_format}"
                     output_path = os.path.join(tmpdir, filename)
                     raw_duration = ff_config.recording_duration if ff_config else 5
 
                     hours = raw_duration // 60
                     mins = raw_duration % 60
                     secs = 0
+
                     rec_duration = f"{hours:02}:{mins:02}:{secs:02}"
+                    rec_crf = str(ff_config.recording_crf)
+                    rec_preset = ff_config.recording_preset if ff_config else 'veryfast'
                     
                     # Timeout should ALWAYS be higher than recording duration, here it's 5+ minutes
                     # ex: if 10 min, timeout = (10 * 60) + 300, bc it's in seconds, so it'll be 900 seconds / 15 min
@@ -91,8 +97,16 @@ class Command(BaseCommand):
                         "-i", hls_url,
                         "-t", rec_duration,
                         "-c:v", "libx264",
-                        "-preset", "veryfast",
-                        "-crf", "28",
+                        "-preset", rec_preset,
+                        "-crf", rec_crf,
+                    ]
+
+                    # We just add the resolution param if we have a value, else we use the native video's resolution (by not using it)
+                    if rec_resolution:
+                        ffmpeg_cmd += ["-vf", f"scale={rec_resolution}",]
+
+                    # We just add the last params so we can build our video after everything is done
+                    ffmpeg_cmd += [
                         "-c:a", "aac",
                         "-b:a", "96k",
                         output_path
