@@ -3,7 +3,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 
 from django.http import StreamingHttpResponse, HttpResponseNotFound
-from .models import Recording, Camera
+from .models import Recording, Camera, FFmpegConfig
 from datetime import datetime
 from django.db.models import Q
 import requests
@@ -99,33 +99,28 @@ def history_view(request):
 @login_required
 def config_view(request):
     """
-        View for the configuration page, showing recordings.
-        - Filters recordings by date and search query if provided
-        - Displays up to 20 most recent recordings
+        View for the configuration page, displaying saved FFmpeg configs.
+        - Lets you customize how each recording is saved
     """
-    date_filter = request.GET.get('date')
-    search_query = request.GET.get('search', '')
-    recordings = Recording.objects.select_related('camera')
+    config = FFmpegConfig.objects.first()
 
-    if date_filter:
-        try:
-            parsed_date = datetime.strptime(date_filter, "%Y-%m-%d").date()
-            recordings = recordings.filter(timestamp__date=parsed_date)
-        except ValueError:
-            pass
+    if 'reset' in request.POST:
+        config.reset_to_default()
+        return redirect('config')
 
-    if search_query:
-        recordings = recordings.filter(
-            Q(camera__name__icontains=search_query) |
-            Q(camera__location__icontains=search_query) |
-            Q(s3_url__icontains=search_query) |
-            Q(filename__icontains=search_query)
-        )
+    if request.method == 'POST':
+        config.recording_duration = int(request.POST.get('duration', config.recording_duration))
+        config.recording_resolution = request.POST.get('resolution', config.recording_resolution)
+        config.recording_crf = int(request.POST.get('crf', config.recording_crf))
+        config.recording_format = request.POST.get('format', config.recording_format)
+        config.recording_preset = request.POST.get('compression', config.recording_preset)
+        config.auto_save = (request.POST.get('auto_save') == 'on')
 
-    recordings = recordings.order_by('-timestamp')[:20]
+        config.save()
+        return redirect('config')
 
     return render(request, 'config.html', {
-        'recordings': recordings,
+        'config':config,
     })
 
 

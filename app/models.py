@@ -77,7 +77,7 @@ class FFmpegConfig(models.Model):
 
         Use's videos native resolution if not specified/blank
         Same for mp4, DO NOT INCLUDE . (dot) IN DB!!
-        Validator limits bitrate usage, god please have mercy on our DBs
+        Validator limits crf usage, god please have mercy on our DBs
     """
 
     recording_duration = models.PositiveIntegerField(default=5)
@@ -86,6 +86,39 @@ class FFmpegConfig(models.Model):
     recording_preset = models.CharField(max_length=12, default='veryfast')
     recording_crf = models.PositiveSmallIntegerField(default=28, validators=[MaxValueValidator(32)])
     
+    @property
+    def get_resolution_display(self):
+        mapping = {
+            "480:360": "Baixa",
+            "1080:720": "Média",
+            "1920:1080": "Alta",
+            "": "Nativa"
+        }
+
+        return mapping.get(self.recording_resolution, self.recording_resolution or "Nativa")
+    
+    @property
+    def get_crf_display(self):
+        ranges = [
+        (18, 22, "Alta"),
+        (22, 26, "Média"),
+        (26, 30, "Baixa"),
+        (30, 33, "Muito Baixa"),
+        ]
+
+        crf = self.recording_crf
+        for start, end, label in ranges:
+            if start <= crf < end:
+                return label
+        return "Indefinido"
+
+    def reset_to_default(self):
+        self.recording_duration = 5
+        self.recording_resolution = ""
+        self.recording_format = "mp4"
+        self.recording_preset = "veryfast"
+        self.crf = 28
+        self.save()
 
     class Meta:
         verbose_name = "FFmpeg Config"
@@ -95,7 +128,7 @@ class FFmpegConfig(models.Model):
         """
             - Rounds to save only integers to db
             - 1 is for minimum value
-            - Less than 18 would make each files be tooooo big (>w>)
+            - Less than 18 crf would make each files be tooooo big (>w>)
         """
         self.recording_duration = max(int(round(self.recording_duration)), 1)
         self.recording_crf = max(int(round(self.recording_crf)), 18)

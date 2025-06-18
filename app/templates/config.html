@@ -84,100 +84,117 @@
     </div>
   </div>
 
-    <div class="main-content">
-        <div class="header-box">
-            <div>
-                <h1>Configurações do Sistema</h1>
-                <p>Personalize as configurações de gravação e monitoramento
-                    do DidiLanches</p>
-            </div>
-            <div class="status">Sistema Online</div>
-        </div>
-
-        <div class="settings-container">
-            <div class="left-column">
-                <div class="section">
-                    <h2>Configurações de Gravação</h2>
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label>Duração</label>
-                            <select>
-                                <option>30 segundos</option>
-                                <option>1 minuto</option>
-                                <option>5 minutos</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Resolução</label>
-                            <select>
-                                <option>Baixa</option>
-                                <option>Média</option>
-                                <option>Alta</option>
-                                <option>Nativa</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Formato</label>
-                            <select>
-                                <option>MP4</option>
-                                <option>AVI</option>
-                                <option>MKV</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Compressão</label>
-                            <select>
-                                <option>Baixa</option>
-                                <option>Média</option>
-                                <option>Alta</option>
-                            </select>
-                        </div>
-
-                    </div>
-                </div>
-                <div class="section">
-                    <h2>Recursos Avançados</h2>
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label>Detecção de Movimento</label>
-                            <div class="disable">Desativado</div>
-                        </div>
-                        <div class="form-group">
-                            <label>Salvar Automaticamente?</label>
-                            <select>
-                                <option>Sim</option>
-                                <option>Não</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Nome do Arquivo</label>
-                            <input type="text" placeholder="camera_{camera}_{date}_{time}">
-                            <small>Use: {camera}, {date}, {time}</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="right-column">
-                <div class="summary-box">
-                    <strong>Resumo</strong><br>
-                    Qualidade: <span class="highlight">Alta</span><br>
-                    Duração: <span class="highlight">30s</span><br>
-                    Formato: <span class="highlight">MP4</span><br>
-                    Tamanho estimado: <span class="text-yellow">~10MB</span>
-                </div>
-                <div class="status-box">
-                    <strong>Status do Sistema</strong><br>
-                    Espaço Livre: <span class="text-green">2.4 TB</span><br>
-                    Câmeras Ativas: <span class="highlight">3/4</span><br>
-                    Última Gravação: <span class="highlight">14:30</span>
-                </div>
-                <button class="button save">Salvar Configurações</button>
-                <button class="button reset">Restaurar Padrão</button>
-            </div>
-        </div>
+  <div class="main-content">
+    <div class="header-box">
+      <div>
+        <h1>Configurações do Sistema</h1>
+        <p>Personalize as configurações de gravação e monitoramento do DidiLanches</p>
+      </div>
+      <div class="status">Sistema Online</div>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <script src="{% static 'js/config.js' %}"></script>
+  
+    <form method="POST">
+      {% csrf_token %}
+  
+      <div class="settings-container">
+        <div class="left-column">
+          <div class="section">
+            <h2>Configurações de Gravação</h2>
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Duração</label>
+                <select name="duration">
+                  <option value="1" {% if config.recording_duration == 1 %}selected{% endif %}>1 minuto</option>
+                  <option value="5" {% if config.recording_duration == 5 %}selected{% endif %}>5 minutos</option>
+                  <option value="10" {% if config.recording_duration == 10 %}selected{% endif %}>10 minutos</option>
+                  <option value="15" {% if config.recording_duration == 15 %}selected{% endif %}>15 minutos</option>
+                  <option value="30" {% if config.recording_duration == 30 %}selected{% endif %}>30 minutos</option>
+                </select>
+              </div>
+  
+              <div class="form-group">
+                <label>Resolução</label>
+                <select name="resolution">
+                  <option value="480:360" {% if config.recording_resolution == "480:360" %}selected{% endif %}>Baixa</option>
+                  <option value="1080:720" {% if config.recording_resolution == "1080:720" %}selected{% endif %}>Média</option>
+                  <option value="1920:1080" {% if config.recording_resolution == "1920:1080" %}selected{% endif %}>Alta</option>
+                  <option value="" {% if config.recording_resolution == "" %}selected{% endif %}>Nativa</option>
+                </select>
+              </div>
+  
+              <div class="form-group">
+                <label>Formato</label>
+                <select name="format">
+                  <option value="mp4" {% if config.recording_format == "mp4" %}selected{% endif %}>MP4</option>
+                  <option value="avi" {% if config.recording_format == "avi" %}selected{% endif %}>AVI</option>
+                  <option value="mkv" {% if config.recording_format == "mkv" %}selected{% endif %}>MKV</option>
+                </select>
+              </div>
+  
+              <div class="form-group">
+                <label>Qualidade (CRF)</label>
+                <select name="crf">
+                  <option value="18" {% if config.recording_crf == 18 %}selected{% endif %}>Alta</option>
+                  <option value="22" {% if config.recording_crf == 22 %}selected{% endif %}>Média</option>
+                  <option value="28" {% if config.recording_crf == 28 %}selected{% endif %}>Baixa</option>
+                  <option value="32" {% if config.recording_crf == 32 %}selected{% endif %}>Muito Baixa</option>
+                </select>
+              </div>
+  
+              <div class="form-group">
+                <label>Compressão</label>
+                <select name="compression">
+                  <option value="slow" {% if config.recording_preset == "slow" %}selected{% endif %}>Lenta</option>
+                  <option value="medium" {% if config.recording_preset == "medium" %}selected{% endif %}>Média</option>
+                  <option value="veryfast" {% if config.recording_preset == "veryfast" %}selected{% endif %}>Rápida</option>
+                  <option value="ultrafast" {% if config.recording_preset == "ultrafast" %}selected{% endif %}>Muito Rápida</option>
+                </select>
+              </div>
+            </div>
+          </div>
+  
+          <div class="section">
+            <h2>Recursos Avançados</h2>
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Detecção de Movimento</label>
+                <div class="disable">Desativado</div>
+              </div>
+  
+              <div class="form-group">
+                <label>Nome do Arquivo</label>
+                <input type="text" placeholder="{camera}_{date}_{time}">
+                <small>Use: {camera}, {date}, {time}</small>
+              </div>
+            </div>
+          </div>
+        </div>
+  
+        <div class="right-column">
+          <div class="summary-box">
+            <strong>Resumo</strong><br>
+            Resolução: <span class="highlight">{{ config.get_resolution_display }}</span><br>
+            Duração: <span class="highlight">{{ config.recording_duration }} minutos</span><br>
+            Qualidade: <span class="highlight">{{ config.get_crf_display }}</span><br>
+            Formato: <span class="highlight">.{{ config.recording_format }}</span>
+          </div>
+  
+          <div class="status-box">
+            <strong>Status do Sistema</strong><br>
+            Espaço Livre: <span class="text-green">9.4 GB</span><br>
+            Câmeras Ativas: <span class="highlight">3/4</span><br>
+            Última Gravação: <span class="highlight">08:30</span>
+          </div>
+  
+          <button class="button save" type="submit">Salvar Configurações</button>
+          <button class="button reset" type="submit" name="reset" value="1">Restaurar Padrão</button>
+        </div>
+      </div>
+    </form>
+  </div>  
+
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <!-- <script src="{% static 'js/config.js' %}"></script> Useless as everything is done here now -->
 </body>
+
 </html>
