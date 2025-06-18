@@ -338,7 +338,6 @@ table td a {
   width: 100%;
   height: 100%;
   background-color: rgba(0, 0, 0, 0.6);
-  /* fundo escuro com transparência */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -354,23 +353,26 @@ table td a {
 }
 
 .video-modal-content {
+  width: 65vw;
+  height: 65vh;
   background-color: #000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
   border-radius: 8px;
-  max-width: 70%;
-  max-height: 70%;
   overflow: hidden;
-  transform: scale(0.8);
-  transition: transform 0.3s ease;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
 }
 
-.video-modal.active .video-modal-content {
-  transform: scale(1);
-}
-
-.video-modal-content video {
+.video-modal-content iframe {
   width: 100%;
   height: 100%;
+  border: none;
   display: block;
-  object-fit: contain;
+}
+
+
+.video-modal.active .video-modal-content {
+  transform: scale(1);
 }
