@@ -1,8 +1,8 @@
-{% extends "admin/index.html" %}
+{% extends 'admin/index.html' %}
 
 {% block content %}
-<div style="margin-bottom: 1rem;">
-    <a href="{% url 'dashboard' %}" style="
+  <div style="margin-bottom: 1rem;">
+    <a href="{% url 'camera' %}" style="
           display: inline-block;
           padding: 8px 16px;
           background-color: #007bff;
@@ -10,10 +10,8 @@
           text-decoration: none;
           border-radius: 5px;
           font-weight: bold;
-       ">
-        ← Return to Dashboard
-    </a>
-</div>
+       ">← Return to Camera</a>
+  </div>
 
-{{ block.super }}
+  {{ block.super }}
 {% endblock %}

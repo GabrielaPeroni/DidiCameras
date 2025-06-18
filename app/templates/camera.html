@@ -3,10 +3,10 @@
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <title>DidiCameras - Historico</title>
+    <title>DidiCameras - Camera</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <link rel="stylesheet" type="text/css" href="{% static 'css/dashboard.css' %}" />
+    <link rel="stylesheet" type="text/css" href="{% static 'css/camera.css' %}" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
   </head>
 
@@ -79,32 +79,13 @@
     </div>
 
     <div class="main-content">
-      <h1>Historico de Gravações</h1>
-      <p>Monitore e acesse as gravações das suas câmeras de segurança</p>
-
-      <!-- Filtros -->
-      <form method="get" id="filter-form" class="filter-bar">
-        <div class="filter-group">
-          <label for="search">Pesquisar</label>
-          <div class="input-icon-wrapper">
-            <span>🔍</span>
-            <input type="text" id="search" name="search" placeholder="Buscar por câmera ou local..." value="{{ request.GET.search|default:'' }}" />
-          </div>
-        </div>
-
-        <div class="filter-group date-group">
-          <label for="date">Data</label>
-          <div class="input-icon-wrapper">
-            <span>📅</span>
-            <input type="text" id="date" name="date" class="flatpickr-input" placeholder="dd/mm/aaaa" value="{{ request.GET.date|default:'' }}" />
-          </div>
-        </div>
-      </form>
+      <h1>LiveView</h1>
+      <p>Monitore as câmeras ativas</p>
 
       <!-- Cards de gravações -->
       <div class="recordings-grid" id="recordingsGrid">
-        {% for rec in recordings %}
-          <div class="recording-card cam{{ rec.camera.id }}">
+        {% for cam in cameras %}
+          <div class="recording-card {{ cam.name }}">
             <div class="recording-header">
               <div class="icon-title">
                 <!-- SVG ícone -->
@@ -113,25 +94,53 @@
                   <circle cx="12" cy="13" r="3" />
                 </svg>
                 <div>
-                  <div class="camera-id">{{ rec.camera.name }}</div>
-                  <div class="location">{{ rec.camera.location }}</div>
+                  <div class="camera-id">{{ cam.name }}</div>
+                  <div class="location">{{ cam.location }}</div>
                 </div>
               </div>
-            </div>
+              <div class="status-dot {% if cam.is_active %}
+                  
+                  
+                  
+                  
+                  
+                  
+                  
+                  
+                  online
 
-            <div class="recording-info">
-              <span class="label">Data:</span>
-              <span class="value">{{ rec.timestamp|date:'d/m/Y' }}</span>
-            </div>
-            <div class="recording-info">
-              <span class="label">Horário:</span>
-              <span class="value">{{ rec.timestamp|date:'H:i' }}</span>
+
+
+
+
+
+
+
+                {% else %}
+                  
+                  
+                  
+                  
+                  
+                  
+                  
+                  
+                  offline
+
+
+
+
+
+
+
+
+                {% endif %}"></div>
             </div>
             <div class="video-button">
-              {% if rec.s3_url %}
-                <a href="{{ rec.friendly_url }}" class="play-button">Assistir</a>
+              {% if cam.live_url %}
+                <a href="#" class="play-button" data-live-url="https://{{ cam.live_url }}">Abrir Live</a>
               {% else %}
-                <a class="play-button disabled">Nenhum arquivo</a>
+                <a class="play-button disabled">Nenhum Link</a>
               {% endif %}
             </div>
           </div>
@@ -141,7 +150,13 @@
       </div>
     </div>
 
+    <div class="video-modal">
+      <div class="video-modal-content">
+        <iframe id="webrtcFrame" src="" frameborder="0" allowfullscreen></iframe>
+      </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <script src="{% static 'js/history.js' %}"></script>
+    <script src="{% static 'js/camera.js' %}"></script>
   </body>
 </html>

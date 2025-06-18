@@ -13,7 +13,7 @@ def login_view(request):
     """
         View for handling user login.
         - If the request method is POST, it attempts to authenticate the user
-        - If authentication is successful, it logs the user in and redirects to the dashboard
+        - If authentication is successful, it logs the user in and redirects to the camera
     """
     if request.method == 'POST':
         username = request.POST['username']
@@ -21,7 +21,7 @@ def login_view(request):
         user = authenticate(request, username=username, password=password)
         if user:
             login(request, user)
-            return redirect('dashboard')
+            return redirect('camera')
         else:
             return render(request, 'login.html', {'error': 'Credenciais Invalidas'})
     return render(request, 'login.html')
@@ -32,12 +32,12 @@ def logout_view(request):
 
 
 @login_required
-def dashboard_view(request):
+def camera_view(request):
     """
-        View for the dashboard, showing recent recordings.
+        View for the camera page, showing recordings.
         - Filters recordings by date and search query if provided
         - Displays up to 20 most recent recordings
-    """        
+    """
     date_filter = request.GET.get('date')
     search_query = request.GET.get('search', '')
     recordings = Recording.objects.select_related('camera')
@@ -52,14 +52,13 @@ def dashboard_view(request):
     if search_query:
         recordings = recordings.filter(
             Q(camera__name__icontains=search_query) |
-            Q(camera__location__icontains=search_query) |
             Q(s3_url__icontains=search_query) |
             Q(filename__icontains=search_query)
         )
 
     recordings = recordings.order_by('-timestamp')[:20]
 
-    return render(request, 'dashboard.html', {
+    return render(request, 'camera.html', {
         'recordings': recordings,
         'cameras': Camera.objects.all(),
     })
@@ -85,7 +84,6 @@ def history_view(request):
     if search_query:
         recordings = recordings.filter(
             Q(camera__name__icontains=search_query) |
-            Q(camera__location__icontains=search_query) |
             Q(s3_url__icontains=search_query) |
             Q(filename__icontains=search_query)
         )
@@ -94,6 +92,7 @@ def history_view(request):
 
     return render(request, 'history.html', {
         'recordings': recordings,
+        'cameras': Camera.objects.all(),
     })
 
 

@@ -72,7 +72,7 @@ TEMPLATES = [
 WSGI_APPLICATION = 'DidiCameras.wsgi.application' # WYSI??? :O 727
 
 LOGIN_URL = '/'
-LOGIN_REDIRECT_URL = '/dashboard/'
+LOGIN_REDIRECT_URL = '/camera/'
 
 
 
