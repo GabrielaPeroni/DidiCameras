@@ -118,7 +118,7 @@ body {
       margin-bottom: 10px;
     }
 
-.filter-bar {
+    .filter-bar {
   background-color: white;
   padding: 20px;
   border-radius: 10px;
@@ -158,6 +158,7 @@ body {
   padding: 10px 10px 10px 35px;
   border: 1px solid #ccc;
   border-radius: 8px;
+  max-width: 900px;
 }
 
 .filter-group.date-group {
@@ -166,6 +167,22 @@ body {
 
 .filter-group.date-group input {
   width: 120px;
+}
+
+.filter-group.camera-group {
+  flex: 0 0 auto;
+}
+
+.filter-group.camera-group select {
+  width: 145px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background-color: white;
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 16px 16px;
+  font-size: 12px;
 }
 
 
@@ -310,4 +327,47 @@ body {
   color: #999;
   cursor: not-allowed;
   pointer-events: none;
+}
+
+.video-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6); /* fundo escuro com transparência */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+  z-index: 9999;
+}
+
+.video-modal.active {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.video-modal-content {
+  background-color: #000;
+  border-radius: 8px;
+  max-width: 70%;
+  max-height: 70%;
+  overflow: hidden;
+  transform: scale(0.8);
+  transition: transform 0.3s ease;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+}
+
+.video-modal.active .video-modal-content {
+  transform: scale(1);
+}
+
+.video-modal-content video {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
 }

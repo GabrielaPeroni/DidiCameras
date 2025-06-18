@@ -11,6 +11,7 @@ import boto3
 import django.db.models as models
 from dotenv import load_dotenv
 
+
 load_dotenv()
 
 THRESHOLD_BYTES = 5 * 1024**3      # 5 GB — try to clean up when exceeding this
@@ -61,6 +62,11 @@ class Command(BaseCommand):
         ff_config = FFmpegConfig.objects.first()
 
         def process_camera(camera):
+            """
+                Process the camera by fetching and converting its HLS recordings.
+                - If storage limit is reached, skip recording.
+
+            """
             if not self.enforce_storage_limit():
                 print(f"⛔ Storage limit reached. Skipping recording for {camera.name}")
                 return
@@ -88,7 +94,7 @@ class Command(BaseCommand):
                     rec_preset = ff_config.recording_preset if ff_config else 'veryfast'
                     
                     # Timeout should ALWAYS be higher than recording duration, here it's 5+ minutes
-                    # ex: if 10 min, timeout = (10 * 60) + 300, bc it's in seconds, so it'll be 900 seconds / 15 min
+                    # ex: if 10 min, timeout = (10 * 60) + 300, because it's in seconds
                     rec_timeout = (raw_duration * 60) + 300
 
                     ffmpeg_cmd = [

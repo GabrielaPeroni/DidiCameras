@@ -2,7 +2,7 @@ const adminButton = document.getElementById('admin-button');
 const userRole = document.getElementById('user-role');
 
 document.addEventListener('keydown', function (e) {
-    if (e.shiftKey && e.key.toLowerCase() === 'a') {
+    if (e.shiftKey && e.key.toLowerCase() === 'f') {
         adminButton.classList.add('visible');
         adminButton.classList.remove('hidden');
 
@@ -11,7 +11,7 @@ document.addEventListener('keydown', function (e) {
 });
 
 document.addEventListener('keyup', function (e) {
-    if (e.key.toLowerCase() === 'a' || e.key === 'Shift') {
+    if (e.key.toLowerCase() === 'f' || e.key === 'Shift') {
         adminButton.classList.remove('visible');
         adminButton.classList.add('hidden');
 
