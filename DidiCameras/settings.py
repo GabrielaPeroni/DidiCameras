@@ -1,6 +1,6 @@
+import os
 from pathlib import Path
 from dotenv import load_dotenv
-from decouple import config
 from datetime import timedelta
 import dj_database_url
 
@@ -10,14 +10,14 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret! Don't run with debug turned on in production!
-SECRET_KEY = config('SECRET_KEY')
-DEBUG = config('DEBUG', default=False, cast=bool)
+SECRET_KEY = os.environ.get('SECRET_KEY')
+DEBUG = os.environ.get('DEBUG', default=False)
 
 ALLOWED_HOSTS = [
-    config('CUSTOM_DOMAIN'),
-    config('RAILWAY_DOMAIN'),
-    config('LOCALHOST_DOMAIN', default='localhost'),
-    config('LOCAL_IP', default='127.0.0.1')
+    os.environ.get('CUSTOM_DOMAIN'),
+    os.environ.get('RAILWAY_DOMAIN'),
+    os.environ.get('LOCALHOST_DOMAIN', default='localhost'),
+    os.environ.get('LOCAL_IP', default='127.0.0.1')
 ]
 # Application definition
 
@@ -78,17 +78,17 @@ LOGIN_REDIRECT_URL = '/camera/'
 
 DATABASES = {
     'default': dj_database_url.config(
-        default=config('DATABASE_URL')
+        default=os.environ.get('DATABASE_URL')
     )
 }
 
 INSTALLED_APPS += ['storages']
 
 # Cloudflare R2 Storage
-R2_ACCESS_KEY_ID = config('R2_ACCESS_KEY_ID')
-R2_SECRET_ACCESS_KEY = config('R2_SECRET_ACCESS_KEY')
-R2_BUCKET_NAME = config('R2_BUCKET_NAME')
-R2_ENDPOINT_URL = config('R2_ENDPOINT_URL')
+R2_ACCESS_KEY_ID = os.environ.get('R2_ACCESS_KEY_ID')
+R2_SECRET_ACCESS_KEY = os.environ.get('R2_SECRET_ACCESS_KEY')
+R2_BUCKET_NAME = os.environ.get('R2_BUCKET_NAME')
+R2_ENDPOINT_URL = os.environ.get('R2_ENDPOINT_URL')
 
 DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 
@@ -149,6 +149,12 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+STORAGES = {
+    'staticfiles': {
+        'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+    }
+}
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

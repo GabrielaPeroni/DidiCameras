@@ -1,86 +1,89 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>DidiCameras</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-<head>
-  <meta charset="UTF-8" />
-  <title>DidiCameras</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" type="text/css" href="{% static 'css/video_player.css' %}">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
+    <link rel="stylesheet" type="text/css" href="{% static 'css/video_player.css' %}" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
+  </head>
 
-</head>
+  <body>
+    <div class="container">
+      <a href="{% url 'history' %}" class="back-button">← Voltar para lista</a>
 
-<body>
-  <div class="container">
-    <a href="{% url 'history' %}" class="back-button">← Voltar para
-      lista</a>
-
-    <div class="top-bar">
-      <div class="left-content">
-        <div class="camera-icon-wrapper">
-          <svg class="camera-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-            stroke-linecap="round" stroke-linejoin="round">
-            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-            <circle cx="12" cy="13" r="4"></circle>
-          </svg>
-        </div>
-        <div class="text-content">
-          <h2>Câmera: {{ recording.camera.name }}</h2>
-          <div class="meta">
-            <span class="location-icon">📍</span> Local: {{recording.camera.location }}
-            <span class="date-icon">📅</span> {{recording.timestamp|date:"d-m-Y H:i:s" }}
+      <div class="top-bar">
+        <div class="left-content">
+          <div class="camera-icon-wrapper">
+            <svg class="camera-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+              <circle cx="12" cy="13" r="4"></circle>
+            </svg>
+          </div>
+          <div class="text-content">
+            <h2>Câmera: {{ recording.camera.name }}</h2>
+            <div class="meta">
+              <span class="location-icon">📍</span> Local: {{ recording.camera.location }}
+              <span class="date-icon">📅</span> {{ recording.timestamp|date:'d-m-Y H:i:s' }}
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <div class="video-wrapper">
-      <video controls autoplay>
-        <source src="{{ video_url }}" type="video/mp4" />
-        Seu navegador não suporta vídeos HTML5.
-      </video>
-      <div class="video-overlay">Câmera: {{ recording.camera.name }}</div>
-      <div class="video-footer">
-        <div class="dot"></div>
-        {{ recording.timestamp|date:"d-m-Y H:i:s" }}
+      <div class="video-wrapper">
+        <video controls autoplay>
+          <source src="{{ video_url }}" type="video/mp4" />Seu navegador não suporta vídeos HTML5.
+        </video>
+        <div class="video-overlay">Câmera: {{ recording.camera.name }}</div>
+        <div class="video-footer">
+          <div class="dot"></div>
+          {{ recording.timestamp|date:'d-m-Y H:i:s' }}
+        </div>
+      </div>
+
+      <div class="bottom-section">
+        <div class="card">
+          <h3>Informações do Vídeo</h3>
+          <div class="info-line">
+            <span>Duração:</span><span>{{ recording.duration|floatformat }}</span>
+          </div>
+          <div class="info-line">
+            <span>Resolução:</span><span>1920x1080</span>
+          </div>
+          <div class="info-line">
+            <span>Taxa de Quadros:</span><span>30 FPS</span>
+          </div>
+          <div class="info-line">
+            <span>Formato:</span><span>MP4</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Status da Gravação</h3>
+          <div class="status-line">
+            <span class="status-circle green"></span>Gravação completa
+          </div>
+          <div class="status-line">
+            <span class="status-circle yellow"></span>Armazenado em nuvem
+          </div>
+          <div class="status-line">
+            <span class="status-circle blue"></span>Backup realizado
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Ações Rápidas</h3>
+          <a href="{{ video_url }}" download class="action-button">
+            <svg class="download-svg" viewBox="0 0 24 24" fill="none" width="24px" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>Baixar Vídeo
+          </a>
+        </div>
       </div>
     </div>
-
-    <div class="bottom-section">
-      <div class="card">
-        <h3>Informações do Vídeo</h3>
-        <div class="info-line"><span>Duração:</span><span>{{ recording.duration|floatformat }}</span></div>
-        <div class="info-line"><span>Resolução:</span><span>1920x1080</span></div>
-        <div class="info-line"><span>Taxa de Quadros:</span><span>30
-            FPS</span></div>
-        <div class="info-line"><span>Formato:</span><span>MP4</span></div>
-      </div>
-
-      <div class="card">
-        <h3>Status da Gravação</h3>
-        <div class="status-line"><span class="status-circle green"></span>Gravação
-          completa</div>
-        <div class="status-line"><span class="status-circle yellow"></span>Armazenado em
-          nuvem</div>
-        <div class="status-line"><span class="status-circle blue"></span>Backup
-          realizado</div>
-      </div>
-
-      <div class="card">
-        <h3>Ações Rápidas</h3>
-        <a href="{{ video_url }}" download class="action-button">
-          <svg class="download-svg" viewBox="0 0 24 24" fill="none" width="24px" stroke="currentColor" stroke-width="2"
-            stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-            <polyline points="7 10 12 15 17 10"></polyline>
-            <line x1="12" y1="15" x2="12" y2="3"></line>
-          </svg>
-          Baixar Vídeo
-        </a>
-      </div>
-    </div>
-  </div>
-</body>
-
+  </body>
 </html>
