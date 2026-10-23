@@ -1,0 +1,47 @@
+name: Backend
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: backend-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.12.13"
+          enable-cache: true
+          python-version: "3.11"  # matches the Docker image
+
+      - name: Install dependencies
+        run: uv sync --frozen
+
+      - name: Ruff (lint)
+        run: uv run ruff check --output-format=github .
+
+      - name: Ruff (format)
+        run: uv run ruff format --check .
+
+      - name: Mypy
+        run: uv run mypy .
+
+      - name: Pytest
+        run: uv run pytest
+
+      - name: Prod settings load and pass deploy checks
+        env:
+          DJANGO_SETTINGS_MODULE: DidiCameras.settings.prod
+          SECRET_KEY: ci-only-not-a-real-secret-key-0123456789-abcdefghijklmnop
+          DATABASE_URL: sqlite:///ci.sqlite3
+        run: uv run python manage.py check --deploy --fail-level ERROR
+
+      - name: OpenAPI schema is valid
+        run: uv run python manage.py spectacular --validate --fail-on-warn --file schema.yml

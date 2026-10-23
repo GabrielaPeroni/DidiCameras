@@ -1,4 +1,9 @@
+import logging
+
+import requests
+from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
+from django.db import DatabaseError, connection
 from django.db.models import QuerySet
 from django.middleware.csrf import get_token
 from django.utils.decorators import method_decorator
@@ -18,10 +23,13 @@ from .serializers import (
     CameraSerializer,
     CsrfTokenSerializer,
     FFmpegConfigSerializer,
+    HealthSerializer,
     LoginSerializer,
     RecordingSerializer,
     UserSerializer,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def get_ffmpeg_config() -> FFmpegConfig:
@@ -108,3 +116,47 @@ class MeView(APIView):
     @extend_schema(responses={200: UserSerializer})
     def get(self, request: Request) -> Response:
         return Response(UserSerializer(request.user).data)
+
+
+class HealthView(APIView):
+    """
+    Uptime check. Always checks the database; `?cameras=1` also probes the camera stream host.
+    Returns 503 if any check fails.
+    """
+
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    @extend_schema(
+        parameters=[OpenApiParameter("cameras", bool, description="Also check the camera host")],
+        responses={200: HealthSerializer, 503: HealthSerializer},
+    )
+    def get(self, request: Request) -> Response:
+        checks = {"database": self._check_database()}
+        if request.query_params.get("cameras") in ("1", "true"):
+            checks["cameras"] = self._check_cameras()
+
+        healthy = all(result == "ok" for result in checks.values())
+        return Response(
+            {"status": "ok" if healthy else "error", "checks": checks},
+            status=status.HTTP_200_OK if healthy else status.HTTP_503_SERVICE_UNAVAILABLE,
+        )
+
+    @staticmethod
+    def _check_database() -> str:
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT 1")
+        except DatabaseError:
+            logger.exception("Health check: database unavailable")
+            return "error"
+        return "ok"
+
+    @staticmethod
+    def _check_cameras() -> str:
+        try:
+            requests.head(settings.CAMERA_STREAM_BASE_URL, timeout=3).raise_for_status()
+        except requests.RequestException:
+            logger.warning("Health check: camera host unavailable", exc_info=True)
+            return "error"
+        return "ok"

@@ -12,6 +12,8 @@ import dj_database_url
 import django_stubs_ext
 from decouple import Csv, config
 
+from DidiCameras.log_formatting import build_logging
+
 # Allow generic subscripting of Django classes at runtime (e.g. ModelAdmin[Camera]).
 django_stubs_ext.monkeypatch()
 
@@ -90,6 +92,7 @@ SPECTACULAR_SETTINGS = {
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
     "COMPONENT_SPLIT_REQUEST": True,
+    "SERVE_PERMISSIONS": ["rest_framework.permissions.IsAuthenticated"],
 }
 
 ROOT_URLCONF = "DidiCameras.urls"
@@ -185,6 +188,12 @@ STORAGES = {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     },
 }
+
+# Logging: plain text by default, JSON lines when LOG_FORMAT=json (enabled in prod).
+LOG_LEVEL: str = config("LOG_LEVEL", default="INFO")
+LOG_FORMAT: str = config("LOG_FORMAT", default="text")
+
+LOGGING = build_logging(LOG_FORMAT, LOG_LEVEL)
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

@@ -1,3 +1,6 @@
+import logging
+import re
+
 import requests
 from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
@@ -8,6 +11,11 @@ from django.shortcuts import get_object_or_404, redirect, render
 
 from .models import Camera, FFmpegConfig, Recording
 from .selectors import filter_recordings
+
+logger = logging.getLogger(__name__)
+
+# Only plain HLS/media segment paths; rejects encoded chars (%), query smuggling and traversal.
+HLS_PATH_RE = re.compile(r"^[A-Za-z0-9_\-]+(/[A-Za-z0-9_\-]+)*\.(m3u8|ts|m4s|mp4|aac)$")
 
 
 def login_view(request: HttpRequest) -> HttpResponse:
@@ -120,7 +128,7 @@ def proxy_hls(request: HttpRequest, cam_name: str, path: str) -> HttpResponseBas
     """
     if cam_name not in Camera.CAMERA_LOCATIONS:
         return HttpResponseNotFound("Camera not found")
-    if ".." in path.split("/"):
+    if not HLS_PATH_RE.fullmatch(path):
         return HttpResponseNotFound("Stream not available")
 
     full_url = f"{settings.CAMERA_STREAM_BASE_URL}/{cam_name}/{path}"
@@ -129,6 +137,9 @@ def proxy_hls(request: HttpRequest, cam_name: str, path: str) -> HttpResponseBas
         r = requests.get(full_url, stream=True, timeout=10)
         r.raise_for_status()
     except requests.RequestException:
+        logger.warning(
+            "HLS upstream unavailable", exc_info=True, extra={"camera": cam_name, "url": full_url}
+        )
         return HttpResponseNotFound("Stream not available")
 
     response = StreamingHttpResponse(

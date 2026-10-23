@@ -27,7 +27,15 @@ def cameras() -> list[Camera]:
 
 @pytest.mark.parametrize(
     "url",
-    ["/api/cameras/", "/api/recordings/", "/api/recordings/1/", "/api/config/", "/api/auth/me/"],
+    [
+        "/api/cameras/",
+        "/api/recordings/",
+        "/api/recordings/1/",
+        "/api/config/",
+        "/api/auth/me/",
+        "/api/schema/",
+        "/api/schema/swagger-ui/",
+    ],
 )
 def test_endpoints_require_auth(url: str) -> None:
     assert APIClient().get(url).status_code == 403
@@ -96,6 +104,7 @@ class TestConfig:
         assert body["recording_crf"] == 28
         assert body["crf_display"] == "Baixa"
         assert body["resolution_display"] == "Nativa"
+        assert body["recording_format"] == "mp4"
 
     def test_patch(self, api: APIClient) -> None:
         response = api.patch(
@@ -114,6 +123,23 @@ class TestConfig:
     )
     def test_patch_validates(self, api: APIClient, payload: dict[str, int]) -> None:
         assert api.patch("/api/config/", payload, format="json").status_code == 400
+
+    @pytest.mark.parametrize(
+        "payload",
+        [
+            {"recording_preset": "placebo; rm"},
+            {"recording_format": "exe"},
+            {"recording_resolution": "1920x1080,drawtext=x"},
+        ],
+    )
+    def test_patch_rejects_unsafe_ffmpeg_values(
+        self, api: APIClient, payload: dict[str, str]
+    ) -> None:
+        assert api.patch("/api/config/", payload, format="json").status_code == 400
+
+    def test_patch_accepts_blank_resolution(self, api: APIClient) -> None:
+        response = api.patch("/api/config/", {"recording_resolution": ""}, format="json")
+        assert response.status_code == 200
 
     def test_put_not_allowed(self, api: APIClient) -> None:
         assert api.put("/api/config/", {}, format="json").status_code == 405
