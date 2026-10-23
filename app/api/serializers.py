@@ -75,3 +75,8 @@ class UserSerializer(serializers.Serializer[Any]):
 
 class CsrfTokenSerializer(serializers.Serializer[Any]):
     csrf_token = serializers.CharField(read_only=True)
+
+
+class HealthSerializer(serializers.Serializer[Any]):
+    status = serializers.ChoiceField(choices=["ok", "error"], read_only=True)
+    checks = serializers.DictField(child=serializers.CharField(), read_only=True)

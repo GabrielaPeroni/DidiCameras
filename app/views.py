@@ -1,3 +1,5 @@
+import logging
+
 import requests
 from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
@@ -8,6 +10,8 @@ from django.shortcuts import get_object_or_404, redirect, render
 
 from .models import Camera, FFmpegConfig, Recording
 from .selectors import filter_recordings
+
+logger = logging.getLogger(__name__)
 
 
 def login_view(request: HttpRequest) -> HttpResponse:
@@ -129,6 +133,9 @@ def proxy_hls(request: HttpRequest, cam_name: str, path: str) -> HttpResponseBas
         r = requests.get(full_url, stream=True, timeout=10)
         r.raise_for_status()
     except requests.RequestException:
+        logger.warning(
+            "HLS upstream unavailable", exc_info=True, extra={"camera": cam_name, "url": full_url}
+        )
         return HttpResponseNotFound("Stream not available")
 
     response = StreamingHttpResponse(

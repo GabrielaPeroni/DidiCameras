@@ -1,3 +1,4 @@
+import logging
 import os
 import subprocess
 import tempfile
@@ -12,6 +13,8 @@ from django.utils import timezone
 from app.models import Camera, FFmpegConfig, Recording
 from app.services.storage import bucket_name, get_s3_client, key_for
 
+logger = logging.getLogger(__name__)
+
 THRESHOLD_BYTES = 5 * 1024**3  # 5 GB — try to clean up when exceeding this
 MAX_STORAGE_BYTES = 9.8 * 1024**3  # 9.8 GB — stop uploads beyond this !!
 
@@ -21,12 +24,11 @@ class Command(BaseCommand):
 
     def enforce_storage_limit(self) -> bool:
         total = Recording.objects.aggregate(total_size=models.Sum("size"))["total_size"] or 0
-        print(f"🗃️ Total storage used: {round(total / 1024**3, 2)} GB")
+        logger.info("Total storage used: %.2f GB", total / 1024**3, extra={"bytes": total})
 
         if total >= MAX_STORAGE_BYTES:
-            print(
-                f"❌ Storage over hard limit ({round(MAX_STORAGE_BYTES / 1024**3, 2)} GB). "
-                "Upload denied!"
+            logger.error(
+                "Storage over hard limit (%.2f GB), upload denied", MAX_STORAGE_BYTES / 1024**3
             )
             return False
 
@@ -36,7 +38,7 @@ class Command(BaseCommand):
         # If between thresholds, try deleting oldest recordings
         recordings_to_delete = Recording.objects.order_by("timestamp")[:2]
         if not recordings_to_delete:
-            print("⚠️ No recordings to delete, but storage above threshold.")
+            logger.warning("No recordings to delete, but storage above threshold")
             return True
 
         s3 = get_s3_client()
@@ -46,9 +48,9 @@ class Command(BaseCommand):
                 s3_key = key_for(rec.s3_url, bucket_name())
                 s3.delete_object(Bucket=bucket_name(), Key=s3_key)
                 rec.delete()
-                print(f"🗑️ Deleted recording: {rec.filename}")
-            except Exception as e:
-                print(f"⚠️ Failed to delete recording {rec.filename}: {e}")
+                logger.info("Deleted recording %s", rec.filename)
+            except Exception:
+                logger.exception("Failed to delete recording %s", rec.filename)
 
         return True  # After cleanup, allow upload
 
@@ -63,12 +65,12 @@ class Command(BaseCommand):
 
             """
             if not self.enforce_storage_limit():
-                print(f"⛔ Storage limit reached. Skipping recording for {camera.name}")
+                logger.warning("Storage limit reached, skipping recording for %s", camera.name)
                 return
 
             cam_name = camera.name.lower()
-            print(f"\n▶ Starting recording for: {cam_name}")
-            hls_url = f"https://cams.didicameras.live/{cam_name}/index.m3u8"
+            logger.info("Starting recording for %s", cam_name)
+            hls_url = f"{settings.CAMERA_STREAM_BASE_URL}/{cam_name}/index.m3u8"
 
             rec_format = ff_config.recording_format if ff_config else "mp4"
             rec_resolution = ff_config.recording_resolution if ff_config else ""
@@ -122,11 +124,13 @@ class Command(BaseCommand):
                         ffmpeg_cmd, capture_output=True, text=True, timeout=rec_timeout
                     )
                     if process.returncode != 0:
-                        print(f"❌ FFmpeg failed for {cam_name}:\n{process.stderr}")
+                        logger.error(
+                            "FFmpeg failed for %s", cam_name, extra={"stderr": process.stderr}
+                        )
                         return
 
                     size = os.path.getsize(output_path)
-                    print(f"✅ {cam_name}: FFmpeg complete, size {round(size / 1024 / 1024, 2)} MB")
+                    logger.info("FFmpeg complete for %s (%.2f MB)", cam_name, size / 1024**2)
 
                     s3 = get_s3_client()
 
@@ -142,9 +146,9 @@ class Command(BaseCommand):
                         filename=filename,
                         size=size,
                     )
-                    print(f"📥 Saved recording for {cam_name}")
-            except Exception as e:
-                print(f"💥 Error with {cam_name}: {e}")
+                    logger.info("Saved recording %s", filename)
+            except Exception:
+                logger.exception("Recording failed for %s", cam_name)
 
         # Run all camera recordings in parallel
         with ThreadPoolExecutor(max_workers=3) as executor:
@@ -152,4 +156,4 @@ class Command(BaseCommand):
             for future in as_completed(futures):
                 future.result()
 
-        print("✅ All recordings done.")
+        logger.info("All recordings done")

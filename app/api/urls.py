@@ -14,6 +14,7 @@ urlpatterns = [
     path("", include(router.urls)),
     path("config/", views.FFmpegConfigView.as_view(), name="api-config"),
     path("config/reset/", views.FFmpegConfigResetView.as_view(), name="api-config-reset"),
+    path("health/", views.HealthView.as_view(), name="api-health"),
     path("auth/csrf/", views.CsrfView.as_view(), name="api-csrf"),
     path("auth/login/", views.LoginView.as_view(), name="api-login"),
     path("auth/logout/", views.LogoutView.as_view(), name="api-logout"),
