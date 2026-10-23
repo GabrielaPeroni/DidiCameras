@@ -1,0 +1,67 @@
+[project]
+name = "didicameras"
+version = "0.1.0"
+description = "Django REST API for managing security camera streams and recordings."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "boto3>=1.38",
+    "dj-database-url>=3.0",
+    "django>=5.2,<5.3",
+    "django-axes>=8.0",
+    "django-cors-headers>=4.7",
+    "django-storages>=1.14",
+    "django-stubs-ext>=6.1.2",
+    "djangorestframework>=3.16",
+    "gunicorn>=23.0",
+    "psycopg2-binary>=2.9",
+    "python-decouple>=3.8",
+    "requests>=2.32",
+    "whitenoise>=6.9",
+]
+
+[dependency-groups]
+dev = [
+    "django-stubs[compatible-mypy]>=5.2",
+    "djangorestframework-stubs[compatible-mypy]>=3.16",
+    "pre-commit>=4.0",
+    "pytest>=8.3",
+    "pytest-django>=4.11",
+    "ruff>=0.12",
+    "types-requests>=2.32",
+    "boto3-stubs[s3]>=1.38",
+]
+
+[tool.uv]
+package = false
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+extend-exclude = ["app/migrations", "staticfiles", "static"]
+force-exclude = true
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "DJ", "SIM", "RUF"]
+ignore = ["RUF012"]  # Django class attributes (Meta, CAMERA_LOCATIONS) are fine as mutable defaults
+
+[tool.ruff.lint.isort]
+known-first-party = ["app", "DidiCameras"]
+
+[tool.mypy]
+python_version = "3.11"
+plugins = ["mypy_django_plugin.main", "mypy_drf_plugin.main"]
+strict = true
+exclude = ["app/migrations/", "staticfiles/", "static/"]
+
+[[tool.mypy.overrides]]
+module = ["decouple", "dj_database_url", "axes.*", "corsheaders.*", "storages.*"]
+ignore_missing_imports = true
+
+[tool.django-stubs]
+django_settings_module = "DidiCameras.settings.test"
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "DidiCameras.settings.test"
+python_files = ["test_*.py", "tests.py"]
+addopts = "-ra --strict-markers"

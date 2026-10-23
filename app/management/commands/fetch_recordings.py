@@ -1,49 +1,52 @@
-from django.core.management.base import BaseCommand
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from DidiCameras import settings
-from app.models import Camera, Recording, FFmpegConfig
-from django.utils import timezone
-from botocore.client import Config
 import os
 import subprocess
 import tempfile
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Any
+
 import boto3
 import django.db.models as models
-from dotenv import load_dotenv
+from botocore.client import Config
+from django.conf import settings
+from django.core.management.base import BaseCommand
+from django.utils import timezone
 
+from app.models import Camera, FFmpegConfig, Recording
 
-load_dotenv()
-
-THRESHOLD_BYTES = 5 * 1024**3      # 5 GB — try to clean up when exceeding this
+THRESHOLD_BYTES = 5 * 1024**3  # 5 GB — try to clean up when exceeding this
 MAX_STORAGE_BYTES = 9.8 * 1024**3  # 9.8 GB — stop uploads beyond this !!
 
-class Command(BaseCommand):
-    help = 'Fetch and convert HLS recordings from all cameras in parallel.'
 
-    def enforce_storage_limit(self):
-        total = Recording.objects.aggregate(total_size=models.Sum('size'))['total_size'] or 0
+class Command(BaseCommand):
+    help = "Fetch and convert HLS recordings from all cameras in parallel."
+
+    def enforce_storage_limit(self) -> bool:
+        total = Recording.objects.aggregate(total_size=models.Sum("size"))["total_size"] or 0
         print(f"🗃️ Total storage used: {round(total / 1024**3, 2)} GB")
 
         if total >= MAX_STORAGE_BYTES:
-            print(f"❌ Storage over hard limit ({round(MAX_STORAGE_BYTES / 1024**3, 2)} GB). Upload denied!")
+            print(
+                f"❌ Storage over hard limit ({round(MAX_STORAGE_BYTES / 1024**3, 2)} GB). "
+                "Upload denied!"
+            )
             return False
 
         if total < THRESHOLD_BYTES:
             return True
 
         # If between thresholds, try deleting oldest recordings
-        recordings_to_delete = Recording.objects.order_by('timestamp')[:2]
+        recordings_to_delete = Recording.objects.order_by("timestamp")[:2]
         if not recordings_to_delete:
             print("⚠️ No recordings to delete, but storage above threshold.")
             return True
 
         s3 = boto3.client(
-            's3',
+            "s3",
             aws_access_key_id=settings.R2_ACCESS_KEY_ID,
             aws_secret_access_key=settings.R2_SECRET_ACCESS_KEY,
             endpoint_url=settings.R2_ENDPOINT_URL,
-            region_name='auto',
-            config=Config(signature_version='s3v4'),
+            region_name="auto",
+            config=Config(signature_version="s3v4"),
         )
 
         for rec in recordings_to_delete:
@@ -57,14 +60,14 @@ class Command(BaseCommand):
 
         return True  # After cleanup, allow upload
 
-    def handle(self, *args, **options):
+    def handle(self, *args: Any, **options: Any) -> None:
         cameras = Camera.objects.all()
         ff_config = FFmpegConfig.objects.first()
 
-        def process_camera(camera):
+        def process_camera(camera: Camera) -> None:
             """
-                Process the camera by fetching and converting its HLS recordings.
-                - If storage limit is reached, skip recording.
+            Process the camera by fetching and converting its HLS recordings.
+            - If storage limit is reached, skip recording.
 
             """
             if not self.enforce_storage_limit():
@@ -75,12 +78,12 @@ class Command(BaseCommand):
             print(f"\n▶ Starting recording for: {cam_name}")
             hls_url = f"https://cams.didicameras.live/{cam_name}/index.m3u8"
 
-            rec_format = ff_config.recording_format if ff_config else 'mp4'
-            rec_resolution = ff_config.recording_resolution
+            rec_format = ff_config.recording_format if ff_config else "mp4"
+            rec_resolution = ff_config.recording_resolution if ff_config else ""
 
             try:
                 with tempfile.TemporaryDirectory() as tmpdir:
-                    timestamp = timezone.now().strftime('%Y%m%d_%H%M%S')
+                    timestamp = timezone.now().strftime("%Y%m%d_%H%M%S")
                     filename = f"{cam_name}_{timestamp}.{rec_format}"
                     output_path = os.path.join(tmpdir, filename)
                     raw_duration = ff_config.recording_duration if ff_config else 5
@@ -90,9 +93,9 @@ class Command(BaseCommand):
                     secs = 0
 
                     rec_duration = f"{hours:02}:{mins:02}:{secs:02}"
-                    rec_crf = str(ff_config.recording_crf)
-                    rec_preset = ff_config.recording_preset if ff_config else 'veryfast'
-                    
+                    rec_crf = str(ff_config.recording_crf if ff_config else 28)
+                    rec_preset = ff_config.recording_preset if ff_config else "veryfast"
+
                     # Timeout should ALWAYS be higher than recording duration, here it's 5+ minutes
                     # ex: if 10 min, timeout = (10 * 60) + 300, because it's in seconds
                     rec_timeout = (raw_duration * 60) + 300
@@ -100,25 +103,32 @@ class Command(BaseCommand):
                     ffmpeg_cmd = [
                         "ffmpeg",
                         "-y",
-                        "-i", hls_url,
-                        "-t", rec_duration,
-                        "-c:v", "libx264",
-                        "-preset", rec_preset,
-                        "-crf", rec_crf,
+                        "-i",
+                        hls_url,
+                        "-t",
+                        rec_duration,
+                        "-c:v",
+                        "libx264",
+                        "-preset",
+                        rec_preset,
+                        "-crf",
+                        rec_crf,
                     ]
 
-                    # We just add the resolution param if we have a value, else we use the native video's resolution (by not using it)
+                    # We just add the resolution param if we have a value,
+                    # else we use the native video's resolution (by not using it)
                     if rec_resolution:
-                        ffmpeg_cmd += ["-vf", f"scale={rec_resolution}",]
+                        ffmpeg_cmd += [
+                            "-vf",
+                            f"scale={rec_resolution}",
+                        ]
 
                     # We just add the last params so we can build our video after everything is done
-                    ffmpeg_cmd += [
-                        "-c:a", "aac",
-                        "-b:a", "96k",
-                        output_path
-                    ]
+                    ffmpeg_cmd += ["-c:a", "aac", "-b:a", "96k", output_path]
 
-                    process = subprocess.run(ffmpeg_cmd, capture_output=True, text=True, timeout=rec_timeout)
+                    process = subprocess.run(
+                        ffmpeg_cmd, capture_output=True, text=True, timeout=rec_timeout
+                    )
                     if process.returncode != 0:
                         print(f"❌ FFmpeg failed for {cam_name}:\n{process.stderr}")
                         return
@@ -127,12 +137,12 @@ class Command(BaseCommand):
                     print(f"✅ {cam_name}: FFmpeg complete, size {round(size / 1024 / 1024, 2)} MB")
 
                     s3 = boto3.client(
-                        's3',
+                        "s3",
                         aws_access_key_id=settings.R2_ACCESS_KEY_ID,
                         aws_secret_access_key=settings.R2_SECRET_ACCESS_KEY,
                         endpoint_url=settings.R2_ENDPOINT_URL,
-                        region_name='auto',
-                        config=Config(signature_version='s3v4'),
+                        region_name="auto",
+                        config=Config(signature_version="s3v4"),
                     )
 
                     s3_key = f"recordings/{cam_name}/{filename}"
