@@ -6,29 +6,29 @@ Feito para a matéria Cloud, Iot e Indústria 4.0 em Python
 - Python 3.x
 - Banco de dados PostgreSQL
 - Credenciais configuradas no arquivo ```.env```
-- Django e dependências instaladas [```pip install -r requirements.txt```]
-- Ambiente virtual [recomendado]
+- [uv](https://docs.astral.sh/uv/) para gerenciar dependências
 
-## 🚀 Instrucoes de setup local
+## 🚀 Setup local
 
-1. **Clone o repositório**
-   ```bash
-   git clone https://github.com/GabrielaPeroni/DidiCameras.git
-   cd DidiCameras
-   ```
-2. **Crie um virtual environment**
-   ```bash
-    python3 -m venv env
-    venv/Scripts/activate.bat
-    ```
-3. **Instale as dependencias**
-   ```bash
-   pip install -r requirements.txt
-    ```
-4. **Configure as variáveis de ambiente em um arquivo .env na raiz do projeto**
+Requer [uv](https://docs.astral.sh/uv/).
 
-5. **Execute as migracoes e inicie o projeto**
-   ```
-   python manage.py migrate
-   python manage.py runserver
-Para resetar o banco, rode ```python manage.py flush``` (ATENÇÃO: apaga todos os dados).
+```bash
+git clone https://github.com/GabrielaPeroni/DidiCameras.git
+cd DidiCameras
+uv sync                      # cria .venv e instala dependências (incl. dev)
+cp .env.example .env         # opcional em dev: sem DATABASE_URL usa SQLite
+uv run pre-commit install
+uv run python manage.py migrate
+uv run python manage.py runserver
+```
+
+Settings: `DidiCameras.settings.{dev,prod,test}` — `manage.py` usa `dev`, WSGI/Docker usam `prod`, pytest usa `test`.
+
+Qualidade:
+```bash
+uv run ruff check . && uv run ruff format --check .
+uv run mypy .
+uv run pytest
+```
+
+Para resetar o banco, rode `uv run python manage.py flush` (ATENÇÃO: apaga todos os dados).

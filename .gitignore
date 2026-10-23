@@ -269,3 +269,7 @@ dist
 # wrangler project
 .dev.vars
 .wrangler/
+
+# Local planning docs and Claude Code worktrees
+docs/plans/
+.claude/worktrees/

@@ -1,8 +1,7 @@
 from django.contrib import admin
-from django.urls import path, include
-
+from django.urls import include, path
 
 urlpatterns = [
-    path('manage-system-7359/', admin.site.urls),
-    path('', include('app.urls')),
+    path("manage-system-7359/", admin.site.urls),
+    path("", include("app.urls")),
 ]
