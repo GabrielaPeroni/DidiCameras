@@ -60,6 +60,21 @@ describe('login flow', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('Credenciais inválidas')
   })
 
+  it.each([
+    [403, 'Recarregue a página'],
+    [429, 'Muitas tentativas'],
+  ])('does not call a %i a bad password', async (status, message) => {
+    vi.mocked(authApi.login).mockRejectedValue(new ApiError(status, {}))
+    const user = userEvent.setup()
+    renderApp(['/login'])
+
+    await user.type(await screen.findByPlaceholderText('Email'), 'didi')
+    await user.type(screen.getByPlaceholderText('Senha'), 'secret')
+    await user.click(screen.getByRole('button', { name: 'ENTRAR' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(message)
+  })
+
   it('toggles password visibility', async () => {
     const user = userEvent.setup()
     renderApp(['/login'])

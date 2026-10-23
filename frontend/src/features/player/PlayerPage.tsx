@@ -98,7 +98,15 @@ function RecordingView({ recording }: { recording: Recording }) {
         <Card>
           <h2 className="mb-2 font-bold">Ações Rápidas</h2>
           {videoUrl ? (
-            <a href={videoUrl} download className={buttonClasses('primary', 'w-full')}>
+            // `download` is ignored for cross-origin URLs (the recordings CDN), so open the file in
+            // a new tab rather than navigating away from the player.
+            <a
+              href={videoUrl}
+              download
+              target="_blank"
+              rel="noopener noreferrer"
+              className={buttonClasses('primary', 'w-full')}
+            >
               <Download size={20} aria-hidden /> Baixar Vídeo
             </a>
           ) : (
