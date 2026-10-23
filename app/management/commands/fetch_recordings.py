@@ -4,14 +4,13 @@ import tempfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any
 
-import boto3
 import django.db.models as models
-from botocore.client import Config
 from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
 from app.models import Camera, FFmpegConfig, Recording
+from app.services.storage import bucket_name, get_s3_client, key_for
 
 THRESHOLD_BYTES = 5 * 1024**3  # 5 GB — try to clean up when exceeding this
 MAX_STORAGE_BYTES = 9.8 * 1024**3  # 9.8 GB — stop uploads beyond this !!
@@ -40,19 +39,12 @@ class Command(BaseCommand):
             print("⚠️ No recordings to delete, but storage above threshold.")
             return True
 
-        s3 = boto3.client(
-            "s3",
-            aws_access_key_id=settings.R2_ACCESS_KEY_ID,
-            aws_secret_access_key=settings.R2_SECRET_ACCESS_KEY,
-            endpoint_url=settings.R2_ENDPOINT_URL,
-            region_name="auto",
-            config=Config(signature_version="s3v4"),
-        )
+        s3 = get_s3_client()
 
         for rec in recordings_to_delete:
             try:
-                s3_key = rec.s3_url.split(f"/{settings.R2_BUCKET_NAME}/")[-1]
-                s3.delete_object(Bucket=settings.R2_BUCKET_NAME, Key=s3_key)
+                s3_key = key_for(rec.s3_url, bucket_name())
+                s3.delete_object(Bucket=bucket_name(), Key=s3_key)
                 rec.delete()
                 print(f"🗑️ Deleted recording: {rec.filename}")
             except Exception as e:
@@ -136,20 +128,13 @@ class Command(BaseCommand):
                     size = os.path.getsize(output_path)
                     print(f"✅ {cam_name}: FFmpeg complete, size {round(size / 1024 / 1024, 2)} MB")
 
-                    s3 = boto3.client(
-                        "s3",
-                        aws_access_key_id=settings.R2_ACCESS_KEY_ID,
-                        aws_secret_access_key=settings.R2_SECRET_ACCESS_KEY,
-                        endpoint_url=settings.R2_ENDPOINT_URL,
-                        region_name="auto",
-                        config=Config(signature_version="s3v4"),
-                    )
+                    s3 = get_s3_client()
 
                     s3_key = f"recordings/{cam_name}/{filename}"
                     with open(output_path, "rb") as f:
-                        s3.upload_fileobj(f, settings.R2_BUCKET_NAME, s3_key)
+                        s3.upload_fileobj(f, bucket_name(), s3_key)
 
-                    s3_url = f"{settings.R2_ENDPOINT_URL}/{settings.R2_BUCKET_NAME}/{s3_key}"
+                    s3_url = f"{settings.R2_ENDPOINT_URL}/{bucket_name()}/{s3_key}"
                     Recording.objects.create(
                         camera=camera,
                         s3_url=s3_url,
