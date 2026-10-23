@@ -13,6 +13,7 @@ dependencies = [
     "django-storages>=1.14",
     "django-stubs-ext>=6.1.2",
     "djangorestframework>=3.16",
+    "drf-spectacular>=0.30.0",
     "gunicorn>=23.0",
     "psycopg2-binary>=2.9",
     "python-decouple>=3.8",
