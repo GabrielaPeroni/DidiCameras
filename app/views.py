@@ -1,4 +1,5 @@
 import logging
+import re
 
 import requests
 from django.conf import settings
@@ -16,6 +17,9 @@ from .models import Camera
 
 logger = logging.getLogger(__name__)
 
+# Only plain HLS/media segment paths; rejects encoded chars (%), query smuggling and traversal.
+HLS_PATH_RE = re.compile(r"^[A-Za-z0-9_\-]+(/[A-Za-z0-9_\-]+)*\.(m3u8|ts|m4s|mp4|aac)$")
+
 
 def proxy_hls(request: HttpRequest, cam_name: str, path: str) -> HttpResponseBase:
     """
@@ -29,7 +33,7 @@ def proxy_hls(request: HttpRequest, cam_name: str, path: str) -> HttpResponseBas
         return HttpResponseForbidden("Authentication required")
     if cam_name not in Camera.CAMERA_LOCATIONS:
         return HttpResponseNotFound("Camera not found")
-    if ".." in path.split("/"):
+    if not HLS_PATH_RE.fullmatch(path):
         return HttpResponseNotFound("Stream not available")
 
     full_url = f"{settings.CAMERA_STREAM_BASE_URL}/{cam_name}/{path}"

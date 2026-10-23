@@ -116,6 +116,16 @@ class TestProxyHls:
         assert client.get("/api/stream/cam1/../secret").status_code == 404
         upstream.assert_not_called()
 
+    @pytest.mark.parametrize(
+        "path", ["%252e%252e/secret.m3u8", "index.m3u8%3Fx=1", "secret.txt", "a//b.ts"]
+    )
+    def test_non_hls_paths_404(self, client: Client, upstream: MagicMock, path: str) -> None:
+        assert client.get(f"/secure-stream/cam1/{path}").status_code == 404
+        upstream.assert_not_called()
+
+    def test_segment_path_allowed(self, client: Client, upstream: MagicMock) -> None:
+        assert client.get("/secure-stream/cam1/seg_001/part-2.ts").status_code == 200
+
     def test_upstream_failure_404(self, client: Client, upstream: MagicMock) -> None:
         upstream.side_effect = requests.ConnectionError
         assert client.get("/api/stream/cam1/index.m3u8").status_code == 404
