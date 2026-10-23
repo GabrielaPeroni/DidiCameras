@@ -72,7 +72,7 @@ class Command(BaseCommand):
             logger.info("Starting recording for %s", cam_name)
             hls_url = f"{settings.CAMERA_STREAM_BASE_URL}/{cam_name}/index.m3u8"
 
-            rec_format = ff_config.recording_format if ff_config else "mp4"
+            rec_format = (ff_config.recording_format if ff_config else "") or "mp4"
             rec_resolution = ff_config.recording_resolution if ff_config else ""
 
             try:

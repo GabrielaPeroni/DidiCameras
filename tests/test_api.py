@@ -96,6 +96,7 @@ class TestConfig:
         assert body["recording_crf"] == 28
         assert body["crf_display"] == "Baixa"
         assert body["resolution_display"] == "Nativa"
+        assert body["recording_format"] == "mp4"
 
     def test_patch(self, api: APIClient) -> None:
         response = api.patch(
