@@ -2,3 +2,4 @@ dist
 coverage
 node_modules
 src/api/schema.gen.ts
+openapi/schema.yml

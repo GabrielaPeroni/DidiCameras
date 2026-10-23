@@ -13,7 +13,8 @@
     "typecheck": "tsc -b",
     "test": "vitest run",
     "test:watch": "vitest",
-    "gen:api": "openapi-typescript ${OPENAPI_SCHEMA:-http://127.0.0.1:8000/api/schema/} -o src/api/schema.gen.ts"
+    "gen:api": "openapi-typescript openapi/schema.yml -o src/api/schema.gen.ts",
+    "gen:api:check": "openapi-typescript openapi/schema.yml -o src/api/schema.gen.ts --check"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.104.5",

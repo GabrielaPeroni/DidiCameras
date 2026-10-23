@@ -21,12 +21,12 @@ export function makeRecording(overrides: Partial<Recording> = {}): Recording {
   return {
     id: 17,
     camera: { id: 1, name: 'cam1', location: 'Entrada' },
-    s3_url: 'https://s3.example.com/bucket-recordings/cam1/2025-01-02_10-30.mp4',
     timestamp: '2025-01-02T10:30:00',
     duration: 300,
     size: 52_428_800,
     filename: '2025-01-02_10-30.mp4',
     public_direct_url: 'https://recordings.didicameras.live/cam1/2025-01-02_10-30.mp4',
+    friendly_url: '/cam1/17/',
     ...overrides,
   }
 }

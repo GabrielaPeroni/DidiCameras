@@ -1,20 +1,20 @@
 import { useState, type SubmitEvent, type ReactNode } from 'react'
 
-import type { FFmpegConfig } from '@/api/types'
+import type { FFmpegConfig, FFmpegSettings } from '@/api/types'
 import { Button, Card, ErrorState, PageHeader, Spinner } from '@/components/ui'
 import { useCameras } from '@/features/cameras/queries'
 
 import {
   CRF_OPTIONS,
   crfLabel,
-  DEFAULT_CONFIG,
   DURATION_OPTIONS,
   FORMAT_OPTIONS,
   PRESET_OPTIONS,
   RESOLUTION_OPTIONS,
   resolutionLabel,
+  toSettings,
 } from './options'
-import { useConfig, useUpdateConfig } from './queries'
+import { useConfig, useSaveConfig, type ConfigMutation } from './queries'
 
 export function ConfigPage() {
   const config = useConfig()
@@ -42,21 +42,21 @@ export function ConfigPage() {
 type Feedback = { kind: 'success' | 'error'; message: string } | null
 
 function ConfigForm({ saved }: { saved: FFmpegConfig }) {
-  const [draft, setDraft] = useState<FFmpegConfig>(saved)
+  const [draft, setDraft] = useState<FFmpegSettings>(() => toSettings(saved))
   const [feedback, setFeedback] = useState<Feedback>(null)
-  const update = useUpdateConfig()
+  const update = useSaveConfig()
   const cameras = useCameras()
 
-  const set = <K extends keyof FFmpegConfig>(key: K, value: FFmpegConfig[K]) => {
+  const set = <K extends keyof FFmpegSettings>(key: K, value: FFmpegSettings[K]) => {
     setDraft((d) => ({ ...d, [key]: value }))
     setFeedback(null)
   }
 
-  const save = (values: FFmpegConfig, successMessage: string) => {
-    update.mutate(values, {
+  const save = (action: ConfigMutation, successMessage: string) => {
+    update.mutate(action, {
       onSuccess: (stored) => {
         // The backend normalises values (rounding, CRF floor), so show what it actually stored.
-        setDraft(stored)
+        setDraft(toSettings(stored))
         setFeedback({ kind: 'success', message: successMessage })
       },
       onError: () => {
@@ -67,7 +67,7 @@ function ConfigForm({ saved }: { saved: FFmpegConfig }) {
 
   const handleSubmit = (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault()
-    save(draft, 'Configurações salvas.')
+    save({ kind: 'update', patch: draft }, 'Configurações salvas.')
   }
 
   const activeCameras = cameras.data?.filter((c) => c.is_active).length
@@ -209,7 +209,7 @@ function ConfigForm({ saved }: { saved: FFmpegConfig }) {
           variant="secondary"
           disabled={update.isPending}
           onClick={() => {
-            save(DEFAULT_CONFIG, 'Configurações restauradas para o padrão.')
+            save({ kind: 'reset' }, 'Configurações restauradas para o padrão.')
           }}
         >
           Restaurar Padrão

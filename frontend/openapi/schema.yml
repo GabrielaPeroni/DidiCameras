@@ -1,0 +1,487 @@
+openapi: 3.0.3
+info:
+  title: DidiCameras API
+  version: 1.0.0
+  description: Camera streams, recordings and FFmpeg recording config.
+paths:
+  /api/auth/csrf/:
+    get:
+      operationId: auth_csrf_retrieve
+      description: Sets the `csrftoken` cookie; the SPA sends it back in the `X-CSRFToken`
+        header.
+      tags:
+      - auth
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CsrfToken'
+          description: ''
+  /api/auth/login/:
+    post:
+      operationId: auth_login_create
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+        '400':
+          description: No response body
+  /api/auth/logout/:
+    post:
+      operationId: auth_logout_create
+      tags:
+      - auth
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/auth/me/:
+    get:
+      operationId: auth_me_retrieve
+      tags:
+      - auth
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+  /api/cameras/:
+    get:
+      operationId: cameras_list
+      tags:
+      - cameras
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Camera'
+          description: ''
+  /api/cameras/{id}/:
+    get:
+      operationId: cameras_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Um valor inteiro único que identifica este camera.
+        required: true
+      tags:
+      - cameras
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Camera'
+          description: ''
+  /api/config/:
+    get:
+      operationId: config_retrieve
+      tags:
+      - config
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FFmpegConfig'
+          description: ''
+    patch:
+      operationId: config_partial_update
+      tags:
+      - config
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedFFmpegConfigRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedFFmpegConfigRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedFFmpegConfigRequest'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FFmpegConfig'
+          description: ''
+  /api/config/reset/:
+    post:
+      operationId: config_reset_create
+      tags:
+      - config
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FFmpegConfig'
+          description: ''
+  /api/health/:
+    get:
+      operationId: health_retrieve
+      description: |-
+        Uptime check. Always checks the database; `?cameras=1` also probes the camera stream host.
+        Returns 503 if any check fails.
+      parameters:
+      - in: query
+        name: cameras
+        schema:
+          type: boolean
+        description: Also check the camera host
+      tags:
+      - health
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+          description: ''
+  /api/recordings/:
+    get:
+      operationId: recordings_list
+      parameters:
+      - in: query
+        name: camera
+        schema:
+          type: string
+        description: Camera name, e.g. cam1
+      - in: query
+        name: date
+        schema:
+          type: string
+          format: date
+        description: Only recordings from this day
+      - name: page
+        required: false
+        in: query
+        description: Um número de página dentro do conjunto de resultados paginado.
+        schema:
+          type: integer
+      - in: query
+        name: search
+        schema:
+          type: string
+        description: Matches camera name, URL or filename
+      tags:
+      - recordings
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedRecordingList'
+          description: ''
+  /api/recordings/{id}/:
+    get:
+      operationId: recordings_retrieve
+      parameters:
+      - in: query
+        name: camera
+        schema:
+          type: string
+        description: Camera name, e.g. cam1
+      - in: query
+        name: date
+        schema:
+          type: string
+          format: date
+        description: Only recordings from this day
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Um valor inteiro único que identifica este recording.
+        required: true
+      - in: query
+        name: search
+        schema:
+          type: string
+        description: Matches camera name, URL or filename
+      tags:
+      - recordings
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Recording'
+          description: ''
+components:
+  schemas:
+    Camera:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+        is_active:
+          type: boolean
+        location:
+          type: string
+          readOnly: true
+        live_url:
+          type: string
+          readOnly: true
+      required:
+      - id
+      - live_url
+      - location
+      - name
+    CsrfToken:
+      type: object
+      properties:
+        csrf_token:
+          type: string
+          readOnly: true
+      required:
+      - csrf_token
+    FFmpegConfig:
+      type: object
+      properties:
+        recording_duration:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 1
+          format: int64
+        recording_resolution:
+          type: string
+          maxLength: 11
+        recording_format:
+          type: string
+          maxLength: 4
+        recording_preset:
+          type: string
+          maxLength: 12
+        recording_crf:
+          type: integer
+          maximum: 32
+          minimum: 18
+        resolution_display:
+          type: string
+          readOnly: true
+        crf_display:
+          type: string
+          readOnly: true
+      required:
+      - crf_display
+      - resolution_display
+    Health:
+      type: object
+      properties:
+        status:
+          allOf:
+          - $ref: '#/components/schemas/StatusEnum'
+          readOnly: true
+        checks:
+          type: object
+          additionalProperties:
+            type: string
+          readOnly: true
+      required:
+      - checks
+      - status
+    LoginRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          minLength: 1
+        password:
+          type: string
+          writeOnly: true
+          minLength: 1
+      required:
+      - password
+      - username
+    PaginatedRecordingList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Recording'
+    PatchedFFmpegConfigRequest:
+      type: object
+      properties:
+        recording_duration:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 1
+          format: int64
+        recording_resolution:
+          type: string
+          maxLength: 11
+        recording_format:
+          type: string
+          maxLength: 4
+        recording_preset:
+          type: string
+          minLength: 1
+          maxLength: 12
+        recording_crf:
+          type: integer
+          maximum: 32
+          minimum: 18
+    Recording:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        camera:
+          allOf:
+          - $ref: '#/components/schemas/RecordingCamera'
+          readOnly: true
+        timestamp:
+          type: string
+          format: date-time
+          readOnly: true
+        duration:
+          type: number
+          format: double
+          nullable: true
+        size:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: -9223372036854775808
+          format: int64
+          nullable: true
+        filename:
+          type: string
+          maxLength: 255
+        public_direct_url:
+          type: string
+          readOnly: true
+        friendly_url:
+          type: string
+          readOnly: true
+      required:
+      - camera
+      - friendly_url
+      - id
+      - public_direct_url
+      - timestamp
+    RecordingCamera:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+        location:
+          type: string
+          readOnly: true
+      required:
+      - id
+      - location
+      - name
+    StatusEnum:
+      enum:
+      - ok
+      - error
+      type: string
+      description: |-
+        * `ok` - ok
+        * `error` - error
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        username:
+          type: string
+          readOnly: true
+        is_staff:
+          type: boolean
+          readOnly: true
+      required:
+      - id
+      - is_staff
+      - username
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
