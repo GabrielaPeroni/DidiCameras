@@ -1,14 +1,13 @@
-from datetime import datetime
-
 import requests
+from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
-from django.db.models import Q
 from django.http import HttpRequest, HttpResponse, HttpResponseNotFound, StreamingHttpResponse
 from django.http.response import HttpResponseBase
 from django.shortcuts import get_object_or_404, redirect, render
 
 from .models import Camera, FFmpegConfig, Recording
+from .selectors import filter_recordings
 
 
 def login_view(request: HttpRequest) -> HttpResponse:
@@ -41,25 +40,11 @@ def camera_view(request: HttpRequest) -> HttpResponse:
     - Filters recordings by date and search query if provided
     - Displays up to 20 most recent recordings
     """
-    date_filter = request.GET.get("date")
-    search_query = request.GET.get("search", "")
-    recordings = Recording.objects.select_related("camera")
-
-    if date_filter:
-        try:
-            parsed_date = datetime.strptime(date_filter, "%Y-%m-%d").date()
-            recordings = recordings.filter(timestamp__date=parsed_date)
-        except ValueError:
-            pass
-
-    if search_query:
-        recordings = recordings.filter(
-            Q(camera__name__icontains=search_query)
-            | Q(s3_url__icontains=search_query)
-            | Q(filename__icontains=search_query)
-        )
-
-    recordings = recordings.order_by("-timestamp")[:20]
+    recordings = filter_recordings(
+        Recording.objects.select_related("camera"),
+        date=request.GET.get("date"),
+        search=request.GET.get("search"),
+    )[:20]
 
     return render(
         request,
@@ -78,25 +63,11 @@ def history_view(request: HttpRequest) -> HttpResponse:
     - Filters recordings by date and search query if provided
     - Displays up to 20 most recent recordings
     """
-    date_filter = request.GET.get("date")
-    search_query = request.GET.get("search", "")
-    recordings = Recording.objects.select_related("camera")
-
-    if date_filter:
-        try:
-            parsed_date = datetime.strptime(date_filter, "%Y-%m-%d").date()
-            recordings = recordings.filter(timestamp__date=parsed_date)
-        except ValueError:
-            pass
-
-    if search_query:
-        recordings = recordings.filter(
-            Q(camera__name__icontains=search_query)
-            | Q(s3_url__icontains=search_query)
-            | Q(filename__icontains=search_query)
-        )
-
-    recordings = recordings.order_by("-timestamp")[:20]
+    recordings = filter_recordings(
+        Recording.objects.select_related("camera"),
+        date=request.GET.get("date"),
+        search=request.GET.get("search"),
+    )[:20]
 
     return render(
         request,
@@ -146,13 +117,13 @@ def proxy_hls(request: HttpRequest, cam_name: str, path: str) -> HttpResponseBas
     - Constructs the full URL based on cam_name and path
     - Validates cam_name against known cameras
     - Streams the response to the client (you can add headers/caching etc)
-    - Optionally validate cam_name is one of your cams ['cam1', 'cam2', 'cam3']
     """
-    base_url = "https://cams.didicameras.live"
-    full_url = f"{base_url}/{cam_name}/{path}"
-
-    if cam_name not in ["cam1", "cam2", "cam3"]:
+    if cam_name not in Camera.CAMERA_LOCATIONS:
         return HttpResponseNotFound("Camera not found")
+    if ".." in path.split("/"):
+        return HttpResponseNotFound("Stream not available")
+
+    full_url = f"{settings.CAMERA_STREAM_BASE_URL}/{cam_name}/{path}"
 
     try:
         r = requests.get(full_url, stream=True, timeout=10)

@@ -1,5 +1,6 @@
 from typing import Any
 
+from django.conf import settings
 from django.core.validators import MaxValueValidator
 from django.db import models
 
@@ -57,12 +58,9 @@ class Recording(models.Model):
     @property
     def public_direct_url(self) -> str:
         """Direct URL to the video file (no player page)"""
-        if not self.s3_url:
-            return ""
-        path_parts = self.s3_url.split("/bucket-recordings/")
-        if len(path_parts) > 1:
-            return f"https://recordings.didicameras.live/{path_parts[1].strip('/')}"
-        return ""
+        from .services.storage import bucket_name, public_url_for
+
+        return public_url_for(self.s3_url, bucket_name(), settings.RECORDINGS_PUBLIC_BASE_URL)
 
     @property
     def friendly_url(self) -> str:
@@ -145,5 +143,5 @@ class FFmpegConfig(models.Model):
         self.recording_resolution = ""
         self.recording_format = "mp4"
         self.recording_preset = "veryfast"
-        self.crf = 28
+        self.recording_crf = 28
         self.save()
