@@ -7,6 +7,20 @@ import { useAuth } from '@/lib/authContext'
 import { paths } from '@/routes/paths'
 import type { LoginRedirectState } from '@/routes/RequireAuth'
 
+/** Only same-app paths: `//host` or absolute URLs fall back to the live view. */
+function safeRedirect(from: string | undefined): string {
+  return from?.startsWith('/') && !from.startsWith('//') ? from : paths.cameras
+}
+
+/** 400 is the API's "bad credentials"; lockouts (django-axes) and CSRF failures say something else. */
+function loginErrorMessage(err: unknown): string {
+  if (!(err instanceof ApiError) || err.status >= 500)
+    return 'Não foi possível entrar. Tente novamente.'
+  if (err.status === 400) return 'Credenciais inválidas'
+  if (err.status === 429) return 'Muitas tentativas. Aguarde um pouco e tente novamente.'
+  return 'Não foi possível entrar. Recarregue a página e tente novamente.'
+}
+
 const inputClasses =
   'w-full rounded-lg bg-white px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand-brown'
 
@@ -14,7 +28,7 @@ export function LoginPage() {
   const { state, login } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
-  const from = (location.state as LoginRedirectState | null)?.from ?? paths.cameras
+  const from = safeRedirect((location.state as LoginRedirectState | null)?.from)
 
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -32,11 +46,7 @@ export function LoginPage() {
       await login(username, password)
       await navigate(from, { replace: true })
     } catch (err) {
-      setError(
-        err instanceof ApiError && err.status < 500
-          ? 'Credenciais inválidas'
-          : 'Não foi possível entrar. Tente novamente.',
-      )
+      setError(loginErrorMessage(err))
     } finally {
       setSubmitting(false)
     }
