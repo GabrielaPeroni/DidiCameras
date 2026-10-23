@@ -1,3 +1,4 @@
+import re
 from typing import Any
 
 from rest_framework import serializers
@@ -41,7 +42,43 @@ class RecordingSerializer(serializers.ModelSerializer[Recording]):
         )
 
 
-class FFmpegConfigSerializer(serializers.ModelSerializer[FFmpegConfig]):
+FFMPEG_PRESETS = (
+    "ultrafast",
+    "superfast",
+    "veryfast",
+    "faster",
+    "fast",
+    "medium",
+    "slow",
+    "slower",
+    "veryslow",
+)
+RECORDING_FORMATS = ("mp4", "mkv", "mov", "avi")
+RESOLUTION_RE = re.compile(r"^(\d{2,4}:\d{2,4})?$")
+
+
+# Values end up in the ffmpeg argv and output filename, so only allow known-good ones.
+# Validated in methods (not ChoiceField) so the SPA's generated OpenAPI schema stays stable.
+class FFmpegConfigValidationMixin:
+    def validate_recording_preset(self, value: str) -> str:
+        if value not in FFMPEG_PRESETS:
+            raise serializers.ValidationError(f"Must be one of: {', '.join(FFMPEG_PRESETS)}.")
+        return value
+
+    def validate_recording_format(self, value: str) -> str:
+        if value and value not in RECORDING_FORMATS:
+            raise serializers.ValidationError(f"Must be one of: {', '.join(RECORDING_FORMATS)}.")
+        return value
+
+    def validate_recording_resolution(self, value: str) -> str:
+        if not RESOLUTION_RE.fullmatch(value):
+            raise serializers.ValidationError("Must be WIDTH:HEIGHT (e.g. 1920:1080) or blank.")
+        return value
+
+
+class FFmpegConfigSerializer(
+    FFmpegConfigValidationMixin, serializers.ModelSerializer[FFmpegConfig]
+):
     resolution_display = serializers.CharField(source="get_resolution_display", read_only=True)
     crf_display = serializers.CharField(source="get_crf_display", read_only=True)
 

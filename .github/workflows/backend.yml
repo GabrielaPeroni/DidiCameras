@@ -36,5 +36,12 @@ jobs:
       - name: Pytest
         run: uv run pytest
 
+      - name: Prod settings load and pass deploy checks
+        env:
+          DJANGO_SETTINGS_MODULE: DidiCameras.settings.prod
+          SECRET_KEY: ci-only-not-a-real-secret-key-0123456789-abcdefghijklmnop
+          DATABASE_URL: sqlite:///ci.sqlite3
+        run: uv run python manage.py check --deploy --fail-level ERROR
+
       - name: OpenAPI schema is valid
         run: uv run python manage.py spectacular --validate --fail-on-warn --file schema.yml
