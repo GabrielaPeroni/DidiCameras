@@ -58,9 +58,14 @@ describe('CamerasPage', () => {
     )
     expect(within(dialog).getByRole('button', { name: 'Fechar' })).toHaveFocus()
 
+    // The page behind the dialog is inert while it's open, and restored afterwards.
+    const opener = screen.getByRole('button', { name: 'Abrir Live de cam1', hidden: true })
+    expect(opener.closest('[inert]')).not.toBeNull()
+
     await user.keyboard('{Escape}')
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Abrir Live de cam1' })).toHaveFocus()
+    expect(opener.closest('[inert]')).toBeNull()
+    expect(opener).toHaveFocus()
   })
 
   it('closes from the close button', async () => {

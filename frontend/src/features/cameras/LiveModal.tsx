@@ -1,5 +1,6 @@
 import { X } from 'lucide-react'
 import { useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 
 import type { Camera } from '@/api/types'
 
@@ -9,12 +10,27 @@ export interface LiveModalProps {
   onClose: () => void
 }
 
-/** Embeds the camera's WebRTC page; unmounting drops the iframe, which ends the stream. */
+/**
+ * Embeds the camera's WebRTC page; unmounting drops the iframe, which ends the stream.
+ *
+ * Rendered into `document.body` with every other top-level element made `inert`, so Tab can't
+ * reach the page behind it and screen readers only see the dialog. Escape can't be caught while
+ * focus is inside the cross-origin iframe, so the close button stays visible over the stream.
+ */
 export function LiveModal({ camera, href, onClose }: LiveModalProps) {
+  const dialogRef = useRef<HTMLDivElement>(null)
   const closeRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
     const previouslyFocused = document.activeElement as HTMLElement | null
+    const background = Array.from(document.body.children).filter(
+      (el): el is HTMLElement => el instanceof HTMLElement && el !== dialogRef.current,
+    )
+    // Attribute rather than the `inert` property: same effect, and it's what jsdom understands.
+    const wasInert = background.map((el) => el.hasAttribute('inert'))
+    background.forEach((el) => {
+      el.setAttribute('inert', '')
+    })
     closeRef.current?.focus()
 
     const onKeyDown = (event: KeyboardEvent) => {
@@ -27,14 +43,18 @@ export function LiveModal({ camera, href, onClose }: LiveModalProps) {
     return () => {
       document.removeEventListener('keydown', onKeyDown)
       document.body.style.overflow = overflow
+      background.forEach((el, i) => {
+        el.toggleAttribute('inert', wasInert[i] ?? false)
+      })
       previouslyFocused?.focus()
     }
   }, [onClose])
 
   const title = `Ao vivo: ${camera.name} — ${camera.location}`
 
-  return (
+  return createPortal(
     <div
+      ref={dialogRef}
       role="dialog"
       aria-modal="true"
       aria-label={title}
@@ -53,6 +73,7 @@ export function LiveModal({ camera, href, onClose }: LiveModalProps) {
           title={title}
           allow="autoplay; fullscreen; picture-in-picture"
           allowFullScreen
+          referrerPolicy="no-referrer"
           className="size-full border-0"
         />
         <button
@@ -65,6 +86,7 @@ export function LiveModal({ camera, href, onClose }: LiveModalProps) {
           <X size={20} aria-hidden />
         </button>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
