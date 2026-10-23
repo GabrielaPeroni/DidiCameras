@@ -1,6 +1,6 @@
 # DidiCameras
 
-A Django REST API for monitoring security cameras: it proxies live HLS streams, records clips with FFmpeg, stores them in Cloudflare R2 (S3-compatible), and exposes cameras, recordings and recording settings over a session-authenticated JSON API.
+A Django REST API for monitoring security cameras: it proxies live HLS streams, records clips with FFmpeg, stores them in Cloudflare R2 (S3-compatible), and exposes cameras, recordings and recording settings over a session-authenticated JSON API. A React + TypeScript SPA (`frontend/`) is the UI; Django serves it alongside the API.
 
 Originally built for the *Cloud, IoT e Indústria 4.0 em Python* course.
 
@@ -31,6 +31,7 @@ flowchart LR
 | `app/services/storage.py` | R2/S3 client and public URL mapping |
 | `app/management/commands/fetch_recordings.py` | Records a clip from every camera in parallel and uploads it |
 | `DidiCameras/settings/` | `base`, `dev`, `prod`, `test` settings |
+| `frontend/` | React + TypeScript SPA (Vite); see [`frontend/README.md`](frontend/README.md) |
 
 ## API
 
@@ -64,6 +65,18 @@ uv run python manage.py runserver
 ```
 
 `manage.py` uses `DidiCameras.settings.dev`, WSGI and Docker use `prod`, and pytest uses `test`.
+
+### Frontend
+
+With Django running on `:8000`, start the Vite dev server in a second terminal (Node 22+):
+
+```bash
+cd frontend
+npm install
+npm run dev                  # http://localhost:5173, proxies /api to Django
+```
+
+Log in at `http://localhost:5173/login` with the superuser you created. To try the production setup instead, run `npm run build`. Django then serves the built SPA at `http://localhost:8000/`, and any non-API path returns `frontend/dist/index.html`.
 
 ### Running without cameras (mock mode)
 
@@ -101,6 +114,6 @@ All settings are read from the environment or `.env` via `python-decouple`. See 
 
 ## Deployment
 
-The `Dockerfile` installs dependencies with `uv sync --frozen --no-dev`, runs `collectstatic`, and starts Gunicorn after applying migrations. It is deployed on Railway.
+The `Dockerfile` has two stages. A Node stage builds the SPA (`npm ci && npm run build`). The Python stage installs dependencies with `uv sync --frozen --no-dev`, copies in `frontend/dist`, runs `collectstatic` so WhiteNoise serves the hashed assets under `/static/` (with immutable caching), and starts Gunicorn after applying migrations. Django answers every non-`/api/`, non-admin route with the SPA's `index.html`. It is deployed on Railway.
 
 To reset the database, run `uv run python manage.py flush`. **This deletes all data.**

@@ -50,7 +50,9 @@ export function toSettings(config: FFmpegConfig): FFmpegSettings {
   return {
     recording_duration,
     recording_resolution,
-    recording_format,
+    // A freshly created config stores '' (the model field has no default). mp4 is the intended
+    // default (see `reset_to_default`), so show it and persist it on the next save.
+    recording_format: recording_format || 'mp4',
     recording_preset,
     recording_crf,
   }

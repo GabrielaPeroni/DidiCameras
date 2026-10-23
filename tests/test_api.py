@@ -181,4 +181,4 @@ def test_schema_is_served(api: APIClient) -> None:
 
 def test_stream_route_uses_proxy(api: APIClient) -> None:
     # Unknown camera is rejected before any upstream request.
-    assert api.get("/api/stream/cam9/index.m3u8").status_code in (302, 404)
+    assert api.get("/api/stream/cam9/index.m3u8").status_code in (403, 404)

@@ -11,3 +11,5 @@ venv/
 node_modules/
 staticfiles/
 .venv/
+frontend/dist/
+frontend/coverage/

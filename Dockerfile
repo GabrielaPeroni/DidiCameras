@@ -1,3 +1,16 @@
+# --- Stage 1: build the React SPA (frontend/) -------------------------------------------------
+FROM node:22-slim AS frontend
+
+WORKDIR /frontend
+
+# Install dependencies first (cached unless the lockfile changes)
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm ci
+
+COPY frontend/ ./
+RUN npm run build
+
+# --- Stage 2: Django API + the built SPA, served by Gunicorn/WhiteNoise -----------------------
 FROM python:3.11-slim
 
 COPY --from=ghcr.io/astral-sh/uv:0.12.13 /uv /uvx /bin/
@@ -20,6 +33,8 @@ COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-dev
 
 COPY . /app
+# settings.FRONTEND_DIST: index.html for the SPA catch-all, assets/ picked up by collectstatic
+COPY --from=frontend /frontend/dist /app/frontend/dist
 
 # Run collectstatic at build time
 RUN python manage.py collectstatic --noinput

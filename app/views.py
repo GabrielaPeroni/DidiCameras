@@ -2,119 +2,21 @@ import logging
 
 import requests
 from django.conf import settings
-from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.decorators import login_required
-from django.http import HttpRequest, HttpResponse, HttpResponseNotFound, StreamingHttpResponse
+from django.http import (
+    HttpRequest,
+    HttpResponse,
+    HttpResponseForbidden,
+    HttpResponseNotFound,
+    StreamingHttpResponse,
+)
 from django.http.response import HttpResponseBase
-from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_safe
 
-from .models import Camera, FFmpegConfig, Recording
-from .selectors import filter_recordings
+from .models import Camera
 
 logger = logging.getLogger(__name__)
 
 
-def login_view(request: HttpRequest) -> HttpResponse:
-    """
-    View for handling user login.
-    - If the request method is POST, it attempts to authenticate the user
-    - If authentication is successful, it logs the user in and redirects to the camera
-    """
-    if request.method == "POST":
-        username = request.POST["username"]
-        password = request.POST["password"]
-        user = authenticate(request, username=username, password=password)
-        if user:
-            login(request, user)
-            return redirect("camera")
-        else:
-            return render(request, "login.html", {"error": "Credenciais Invalidas"})
-    return render(request, "login.html")
-
-
-def logout_view(request: HttpRequest) -> HttpResponse:
-    logout(request)
-    return redirect("login")
-
-
-@login_required
-def camera_view(request: HttpRequest) -> HttpResponse:
-    """
-    View for the camera page, showing recordings.
-    - Filters recordings by date and search query if provided
-    - Displays up to 20 most recent recordings
-    """
-    recordings = filter_recordings(
-        Recording.objects.select_related("camera"),
-        date=request.GET.get("date"),
-        search=request.GET.get("search"),
-    )[:20]
-
-    return render(
-        request,
-        "camera.html",
-        {
-            "recordings": recordings,
-            "cameras": Camera.objects.all(),
-        },
-    )
-
-
-@login_required
-def history_view(request: HttpRequest) -> HttpResponse:
-    """
-    View for the history page, showing recordings.
-    - Filters recordings by date and search query if provided
-    - Displays up to 20 most recent recordings
-    """
-    recordings = filter_recordings(
-        Recording.objects.select_related("camera"),
-        date=request.GET.get("date"),
-        search=request.GET.get("search"),
-    )[:20]
-
-    return render(
-        request,
-        "history.html",
-        {
-            "recordings": recordings,
-            "cameras": Camera.objects.all(),
-        },
-    )
-
-
-@login_required
-def config_view(request: HttpRequest) -> HttpResponse:
-    """
-    View for the configuration page, displaying saved FFmpeg configs.
-    - Lets you customize how each recording is saved
-    """
-    config = FFmpegConfig.objects.first() or FFmpegConfig.objects.create()
-
-    if "reset" in request.POST:
-        config.reset_to_default()
-        return redirect("config")
-
-    if request.method == "POST":
-        config.recording_duration = int(request.POST.get("duration", config.recording_duration))
-        config.recording_resolution = request.POST.get("resolution", config.recording_resolution)
-        config.recording_crf = int(request.POST.get("crf", config.recording_crf))
-        config.recording_format = request.POST.get("format", config.recording_format)
-        config.recording_preset = request.POST.get("compression", config.recording_preset)
-
-        config.save()
-        return redirect("config")
-
-    return render(
-        request,
-        "config.html",
-        {
-            "config": config,
-        },
-    )
-
-
-@login_required
 def proxy_hls(request: HttpRequest, cam_name: str, path: str) -> HttpResponseBase:
     """
     Proxy view to stream HLS content from the camera.
@@ -122,6 +24,9 @@ def proxy_hls(request: HttpRequest, cam_name: str, path: str) -> HttpResponseBas
     - Validates cam_name against known cameras
     - Streams the response to the client (you can add headers/caching etc)
     """
+    # 403 rather than a login redirect: the caller is hls.js, not a browser page.
+    if not request.user.is_authenticated:
+        return HttpResponseForbidden("Authentication required")
     if cam_name not in Camera.CAMERA_LOCATIONS:
         return HttpResponseNotFound("Camera not found")
     if ".." in path.split("/"):
@@ -145,28 +50,23 @@ def proxy_hls(request: HttpRequest, cam_name: str, path: str) -> HttpResponseBas
     return response
 
 
-@login_required
-def recording_detail(request: HttpRequest, camera_id: str, recording_id: int) -> HttpResponse:
+@require_safe
+def spa_index(request: HttpRequest) -> HttpResponse:
     """
-    View for displaying a specific recording.
-    - Fetches the recording by camera_id and recording_id
-    - If the recording is not found or has no S3 URL, returns an error page
-    - Otherwise, renders the video player template with the recording details
+    Serve the React SPA's `index.html` for every non-API route; react-router takes it from there.
+    The hashed JS/CSS it references are served by WhiteNoise from STATIC_ROOT.
     """
-    recording = get_object_or_404(
-        Recording.objects.select_related("camera"), camera__name__iexact=camera_id, id=recording_id
-    )
-
-    if not recording.s3_url:
-        return render(
-            request,
-            "video_error.html",
-            {"error": "Este vídeo não está mais disponível"},
-            status=404,
+    index = settings.FRONTEND_DIST / "index.html"
+    try:
+        html = index.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        logger.error("Frontend build missing", extra={"path": str(index)})
+        return HttpResponse(
+            "Frontend not built. Run `npm run build` in frontend/ (or use the Vite dev server).",
+            status=503,
+            content_type="text/plain; charset=utf-8",
         )
-
-    return render(
-        request,
-        "video_player.html",
-        {"recording": recording, "video_url": recording.public_direct_url},
-    )
+    response = HttpResponse(html)
+    # Always revalidate so a deploy's new asset hashes are picked up immediately.
+    response["Cache-Control"] = "no-cache"
+    return response

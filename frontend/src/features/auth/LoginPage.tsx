@@ -45,7 +45,11 @@ export function LoginPage() {
   return (
     <div className="bg-brand-login flex min-h-dvh items-start justify-center">
       <div className="w-full max-w-xs px-5 py-8 text-center">
-        <img src="/Didi.png" alt="Didi Lanches" className="mb-5 w-full" />
+        <img
+          src={`${import.meta.env.BASE_URL}Didi.png`}
+          alt="Didi Lanches"
+          className="mb-5 w-full"
+        />
 
         {error && (
           <p role="alert" className="my-2.5 text-red-700">
