@@ -10,6 +10,7 @@ export function AuthedLayout() {
   const navigate = useNavigate()
 
   const handleLogout = () => {
+    // logout() never rejects (it always signs out locally), so there's nothing to catch here.
     void logout().then(() => navigate(paths.login, { replace: true }))
   }
 
