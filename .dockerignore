@@ -10,3 +10,4 @@ venv/
 .env/
 node_modules/
 staticfiles/
+.venv/
