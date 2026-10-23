@@ -84,7 +84,7 @@ class FFmpegConfig(models.Model):
 
     recording_duration = models.PositiveIntegerField(default=5)
     recording_resolution = models.CharField(max_length=11, blank=True)
-    recording_format = models.CharField(max_length=4, blank=True)
+    recording_format = models.CharField(max_length=4, blank=True, default="mp4")
     recording_preset = models.CharField(max_length=12, default="veryfast")
     recording_crf = models.PositiveSmallIntegerField(default=28, validators=[MaxValueValidator(32)])
 
