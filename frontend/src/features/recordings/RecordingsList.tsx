@@ -1,5 +1,7 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { useEffect } from 'react'
 
+import { ApiError } from '@/api/client'
 import { Button, EmptyState, ErrorState, Spinner } from '@/components/ui'
 import { useCameras } from '@/features/cameras/queries'
 
@@ -17,6 +19,14 @@ export function RecordingsList() {
   const recordings = useRecordings(filters)
   const cameras = useCameras()
   const page = filters.page ?? 1
+
+  // DRF answers 404 "Invalid page" past the last page (stale bookmark, or the last item on the
+  // final page was deleted). Fall back to page 1 instead of a Retry that can never succeed.
+  const pageOutOfRange =
+    page > 1 && recordings.error instanceof ApiError && recordings.error.status === 404
+  useEffect(() => {
+    if (pageOutOfRange) update({ page: undefined })
+  }, [pageOutOfRange, update])
 
   return (
     <section aria-label="Gravações">
