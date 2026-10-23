@@ -9,6 +9,7 @@ __pycache__/
 venv/
 .env/
 node_modules/
+**/node_modules/
 staticfiles/
 .venv/
 frontend/dist/
