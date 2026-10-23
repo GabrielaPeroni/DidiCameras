@@ -1,0 +1,8 @@
+node_modules
+dist
+coverage
+*.local
+*.tsbuildinfo
+
+# The repo-root .gitignore ignores every `lib/` dir (Python packaging); our source lives in one.
+!src/lib/
