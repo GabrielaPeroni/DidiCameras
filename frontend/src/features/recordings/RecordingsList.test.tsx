@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { listCameras } from '@/api/cameras'
+import { ApiError } from '@/api/client'
 import { listRecordings } from '@/api/recordings'
 import { cameras, makeRecording, page } from '@/test/fixtures'
 import { renderRoutes } from '@/test/render'
@@ -82,5 +83,17 @@ describe('RecordingsList', () => {
     renderList()
 
     expect(await screen.findByText('Nenhuma gravação encontrada.')).toBeInTheDocument()
+  })
+
+  it('falls back to page 1 when the requested page no longer exists', async () => {
+    vi.mocked(listRecordings).mockImplementation((filters = {}) =>
+      filters.page
+        ? Promise.reject(new ApiError(404, { detail: 'Invalid page.' }))
+        : Promise.resolve(page([makeRecording()])),
+    )
+    const { router } = renderList('/history?camera=cam1&page=9')
+
+    expect(await screen.findAllByRole('listitem')).toHaveLength(1)
+    expect(router.state.location.search).toBe('?camera=cam1')
   })
 })
