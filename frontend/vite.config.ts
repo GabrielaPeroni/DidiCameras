@@ -25,5 +25,7 @@ export default defineConfig(({ command }) => ({
     globals: true,
     setupFiles: ['./src/test/setup.ts'],
     css: false,
+    // Playwright specs (e2e/) run against the real mock stack, not in jsdom.
+    exclude: ['e2e/**', 'node_modules/**'],
   },
 }))
