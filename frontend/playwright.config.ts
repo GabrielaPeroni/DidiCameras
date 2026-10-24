@@ -19,7 +19,8 @@ export default defineConfig({
     baseURL: process.env.E2E_BASE_URL ?? 'http://localhost:8000',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
-    video: 'retain-on-failure',
+    // Video needs Playwright's own ffmpeg download; traces already include a screencast.
+    video: process.env.CI ? 'off' : 'retain-on-failure',
   },
   // Installed Google Chrome, not Playwright's Chromium: recordings are H.264 MP4 and the bundled
   // Chromium has no proprietary codecs. GitHub's Ubuntu runners ship Chrome, so CI downloads nothing.
