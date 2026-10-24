@@ -93,7 +93,7 @@ A ready-made mock stack (HLS server, MinIO and seed data) is planned in the test
 ```bash
 uv run ruff check . && uv run ruff format --check .
 uv run mypy .              # strict, with django-stubs + drf-stubs
-uv run pytest
+uv run pytest --cov       # coverage gate: 95% (branch coverage, migrations excluded)
 ```
 
 CI (`.github/workflows/backend.yml`) runs all of these on every PR.

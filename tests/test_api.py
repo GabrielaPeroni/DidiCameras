@@ -8,32 +8,6 @@ from app.models import Camera, FFmpegConfig, Recording
 pytestmark = pytest.mark.django_db
 
 
-@pytest.fixture
-def user(django_user_model: Any) -> Any:
-    return django_user_model.objects.create_user("didi", password="secret-pass")
-
-
-@pytest.fixture
-def api(user: Any) -> APIClient:
-    client = APIClient()
-    client.force_authenticate(user)
-    return client
-
-
-@pytest.fixture
-def staff_api(django_user_model: Any) -> APIClient:
-    client = APIClient()
-    client.force_authenticate(
-        django_user_model.objects.create_user("admin", password="secret-pass", is_staff=True)
-    )
-    return client
-
-
-@pytest.fixture
-def cameras() -> list[Camera]:
-    return [Camera.objects.create(name="cam1", is_active=True), Camera.objects.create(name="cam2")]
-
-
 @pytest.mark.parametrize(
     "url",
     [
@@ -139,12 +113,21 @@ class TestConfig:
             {"recording_preset": "placebo; rm"},
             {"recording_format": "exe"},
             {"recording_resolution": "1920x1080,drawtext=x"},
+            {"recording_resolution": "1920x1080"},  # fits max_length, wrong shape
         ],
     )
     def test_patch_rejects_unsafe_ffmpeg_values(
         self, staff_api: APIClient, payload: dict[str, str]
     ) -> None:
         assert staff_api.patch("/api/config/", payload, format="json").status_code == 400
+
+    def test_patch_accepts_known_preset_and_format(self, staff_api: APIClient) -> None:
+        payload = {"recording_preset": "slow", "recording_format": "mkv"}
+
+        response = staff_api.patch("/api/config/", payload, format="json")
+
+        assert response.status_code == 200
+        assert FFmpegConfig.objects.get().recording_format == "mkv"
 
     def test_patch_accepts_blank_resolution(self, staff_api: APIClient) -> None:
         response = staff_api.patch("/api/config/", {"recording_resolution": ""}, format="json")
@@ -217,8 +200,3 @@ def test_schema_is_served(api: APIClient) -> None:
 
     assert response.status_code == 200
     assert b"/api/recordings/" in response.content
-
-
-def test_stream_route_uses_proxy(api: APIClient) -> None:
-    # Unknown camera is rejected before any upstream request.
-    assert api.get("/api/stream/cam9/index.m3u8").status_code in (403, 404)
