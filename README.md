@@ -83,10 +83,17 @@ Log in at `http://localhost:5173/login` with the superuser you created. To try t
 `docker-compose.mock.yml` runs the whole app with fake cameras and fake storage, so you need only Docker:
 
 ```bash
-docker compose -f docker-compose.mock.yml up --build
+docker compose -f docker-compose.mock.yml --profile app up -d --build   # full stack, http://localhost:8000
+docker compose -f docker-compose.mock.yml --profile app down            # stop (add -v to wipe the data)
 ```
 
-Then open http://localhost:8000 and log in as **admin / admin** (staff, can edit the recording config) or **viewer / viewer** (read-only).
+Log in as **admin / admin** (staff, can edit the recording config) or **viewer / viewer** (read-only).
+
+It's built to be cheap to leave running:
+- **Cameras:** each fake camera's ffmpeg starts only while someone is watching or recording it, so the idle stack uses about 0% CPU. The first stream takes about 2 s to start.
+- **Containers:** each one has a CPU and memory cap.
+- **Re-runs:** data persists in volumes, and the seed skips clips that are already uploaded (about 3 s on a re-run).
+- **Builds:** the image copies backend and frontend separately, so a rebuild after an edit redoes only the layers you touched (seconds, not minutes). Drop `--build` when nothing changed.
 
 | Service | Stands in for | Ports |
 |---|---|---|
@@ -96,12 +103,12 @@ Then open http://localhost:8000 and log in as **admin / admin** (staff, can edit
 | `seed` | one-shot job: runs migrations, then `seed_demo_data --with-media` creates the demo users, the cameras (`cam3` offline) and recordings spread over several days, and uploads playable clips | |
 | `app` | the production Docker image, with `MOCK_CAMERAS=True` | 8000 |
 
-To record real clips from the fake cameras, run `docker compose -f docker-compose.mock.yml exec app python manage.py fetch_recordings`. It records for the configured duration, at least 1 minute.
+To record real clips from the fake cameras, run `docker compose -f docker-compose.mock.yml --profile app exec app python manage.py fetch_recordings`. It records for the configured duration, at least 1 minute.
 
 **Hybrid dev:** run only the fakes, and run Django and Vite on your machine with hot reload:
 
 ```bash
-docker compose -f docker-compose.mock.yml up cameras s3
+docker compose -f docker-compose.mock.yml up -d     # default profile: just the fakes, no image build
 MOCK_CAMERAS=True uv run python manage.py migrate
 MOCK_CAMERAS=True uv run python manage.py seed_demo_data --with-media
 MOCK_CAMERAS=True uv run python manage.py runserver

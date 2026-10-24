@@ -73,6 +73,7 @@ class TestWithMedia:
     @pytest.fixture
     def s3(self, monkeypatch: pytest.MonkeyPatch) -> MagicMock:
         client = MagicMock()
+        client.head_object.side_effect = ClientError({"Error": {"Code": "404"}}, "HeadObject")
         monkeypatch.setattr(seed_demo_data, "get_s3_client", lambda: client)
         return client
 
@@ -97,6 +98,24 @@ class TestWithMedia:
         assert keys[0] == "recordings/cam1/cam1_demo_00.mp4"
         assert len(keys) == 6
         assert set(Recording.objects.values_list("size", flat=True)) == {512}
+
+    def test_rerun_skips_clips_already_in_the_bucket(
+        self, s3: MagicMock, ffmpeg: MagicMock
+    ) -> None:
+        s3.head_object.side_effect = None
+        s3.head_object.return_value = {"ContentLength": 999}
+
+        call_command("seed_demo_data", recordings=2, with_media=True)
+
+        ffmpeg.assert_not_called()
+        s3.upload_fileobj.assert_not_called()
+        assert set(Recording.objects.values_list("size", flat=True)) == {999}
+
+    def test_unexpected_head_error_propagates(self, s3: MagicMock, ffmpeg: MagicMock) -> None:
+        s3.head_object.side_effect = ClientError({"Error": {"Code": "403"}}, "HeadObject")
+
+        with pytest.raises(ClientError):
+            call_command("seed_demo_data", recordings=1, with_media=True)
 
     @pytest.mark.parametrize("code", ["BucketAlreadyOwnedByYou", "BucketAlreadyExists"])
     def test_existing_bucket_is_reused(self, s3: MagicMock, ffmpeg: MagicMock, code: str) -> None:

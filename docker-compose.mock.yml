@@ -1,14 +1,21 @@
-# Full stack without real cameras or R2:
-#   docker compose -f docker-compose.mock.yml up --build
-# then open http://localhost:8000 and log in as admin/admin (staff) or viewer/viewer.
+# Camera-less mock environment. Two modes:
 #
-# Or run only the fakes and use the Django/Vite dev servers on the host (MOCK_CAMERAS=True):
-#   docker compose -f docker-compose.mock.yml up cameras s3
+#   Fakes only (default, no image build) — run Django/Vite on the host with MOCK_CAMERAS=True:
+#     docker compose -f docker-compose.mock.yml up -d
+#
+#   Full stack (production image + Postgres + seed data) — http://localhost:8000:
+#     docker compose -f docker-compose.mock.yml --profile app up -d --build
+#   Log in as admin/admin (staff) or viewer/viewer. Later runs can drop --build unless the code
+#   changed; rebuilds only redo the layers you touched (frontend and backend are separate).
+#
+# Cheap at idle: cameras encode only while watched/recorded, everything is CPU/memory capped, and
+# re-seeding skips clips that are already uploaded. Stop with `down` (add -v to wipe the data).
 
 x-app: &app
   build: .
   image: didicameras:mock
-  environment: &app-env
+  profiles: [app]
+  environment:
     MOCK_CAMERAS: "True"
     SECRET_KEY: mock-only-not-a-secret-0123456789-abcdefghijklmnopqrstuvwxyz
     DATABASE_URL: postgres://didi:didi@db:5432/didicameras
@@ -20,20 +27,9 @@ x-app: &app
     CAMERA_STREAM_BASE_URL: http://cameras:8888
     R2_ENDPOINT_URL: http://s3:8333
     LOG_FORMAT: text
+    LOG_LEVEL: WARNING
 
 services:
-  db:
-    image: postgres:17.11-alpine3.23
-    environment:
-      POSTGRES_USER: didi
-      POSTGRES_PASSWORD: didi
-      POSTGRES_DB: didicameras
-    healthcheck:
-      test: ["CMD", "pg_isready", "-U", "didi", "-d", "didicameras"]
-      interval: 2s
-      timeout: 3s
-      retries: 30
-
   # Fake cameras: ffmpeg test patterns served as HLS (:8888) and WebRTC (:8889) by MediaMTX.
   cameras:
     image: bluenviron/mediamtx:1.21.2-ffmpeg
@@ -45,23 +41,48 @@ services:
       - "8189:8189/udp"
       - "8189:8189/tcp"
     healthcheck:
-      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:8888/cam1/index.m3u8"]
-      interval: 2s
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:9997/v3/paths/list"]
+      interval: 5s
       timeout: 3s
-      retries: 30
+      retries: 20
+    cpus: 1.0
+    mem_limit: 256m
+    restart: unless-stopped
 
   # S3-compatible stand-in for Cloudflare R2. No credentials configured, so reads are anonymous
-  # like the public recordings CDN.
+  # like the public recordings CDN. Data persists in the s3-data volume between runs.
   s3:
     image: chrislusf/seaweedfs:4.47
-    command: server -s3 -dir=/data
+    command: server -s3 -dir=/data -volume.max=4
+    volumes:
+      - s3-data:/data
     ports:
       - "8333:8333"
     healthcheck:
       test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8333/"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    cpus: 0.5
+    mem_limit: 512m
+    restart: unless-stopped
+
+  db:
+    image: postgres:17.11-alpine3.23
+    profiles: [app]
+    environment:
+      POSTGRES_USER: didi
+      POSTGRES_PASSWORD: didi
+      POSTGRES_DB: didicameras
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "didi", "-d", "didicameras"]
       interval: 2s
       timeout: 3s
       retries: 30
+    cpus: 0.5
+    mem_limit: 256m
 
   # One-shot: migrate, then create demo users/cameras/recordings and upload playable clips.
   seed:
@@ -76,6 +97,8 @@ services:
 
   app:
     <<: *app
+    # Two workers are plenty locally (the production CMD uses three).
+    command: ["gunicorn", "DidiCameras.wsgi:application", "--bind", "0.0.0.0:8080", "--workers", "2"]
     ports:
       - "8000:8080"
     depends_on:
@@ -88,3 +111,9 @@ services:
       interval: 3s
       timeout: 3s
       retries: 40
+    cpus: 1.0
+    mem_limit: 512m
+
+volumes:
+  s3-data:
+  db-data:
