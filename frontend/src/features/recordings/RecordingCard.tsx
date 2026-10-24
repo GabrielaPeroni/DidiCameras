@@ -29,7 +29,7 @@ export function RecordingCard({ recording }: { recording: Recording }) {
         <dd className="text-right">{formatTime(recording.timestamp)}</dd>
       </dl>
 
-      {recording.s3_url ? (
+      {recording.public_direct_url ? (
         <Link
           to={paths.recording(camera.name, recording.id)}
           aria-label={`Assistir gravação de ${camera.name} em ${formatDate(recording.timestamp)} ${formatTime(recording.timestamp)}`}

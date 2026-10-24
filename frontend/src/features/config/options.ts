@@ -1,4 +1,4 @@
-import type { FFmpegConfig } from '@/api/types'
+import type { FFmpegConfig, FFmpegSettings } from '@/api/types'
 
 /**
  * Select options and display labels for the FFmpeg config form. Mirrors
@@ -38,13 +38,22 @@ export const PRESET_OPTIONS = [
 ] as const
 export type Preset = (typeof PRESET_OPTIONS)[number]['value']
 
-/** Same values as `FFmpegConfig.reset_to_default` (with its `crf` typo fixed). */
-export const DEFAULT_CONFIG: FFmpegConfig = {
-  recording_duration: 5,
-  recording_resolution: '',
-  recording_format: 'mp4',
-  recording_preset: 'veryfast',
-  recording_crf: 28,
+/** The editable subset of a config response (drops the server-computed `*_display` labels). */
+export function toSettings(config: FFmpegConfig): FFmpegSettings {
+  const {
+    recording_duration,
+    recording_resolution,
+    recording_format,
+    recording_preset,
+    recording_crf,
+  } = config
+  return {
+    recording_duration,
+    recording_resolution,
+    recording_format,
+    recording_preset,
+    recording_crf,
+  }
 }
 
 export function resolutionLabel(resolution: string): string {

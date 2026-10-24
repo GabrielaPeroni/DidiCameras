@@ -22,7 +22,7 @@ describe('RecordingsList', () => {
   beforeEach(() => {
     vi.mocked(listCameras).mockResolvedValue(cameras)
     vi.mocked(listRecordings).mockResolvedValue(
-      page([makeRecording(), makeRecording({ id: 18, s3_url: '' })]),
+      page([makeRecording(), makeRecording({ id: 18, public_direct_url: '' })]),
     )
   })
 
