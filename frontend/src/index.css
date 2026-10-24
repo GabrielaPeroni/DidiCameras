@@ -1,0 +1,23 @@
+@import 'tailwindcss';
+
+/* Brand tokens carried over from static/css/*.css so the SPA keeps the Didi look. */
+@theme {
+  --font-sans: 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif;
+
+  --color-brand: #facc15;
+  --color-brand-strong: #fbbc04;
+  --color-brand-login: #fcbf2d;
+  --color-brand-brown: #6e2d14;
+  --color-ink: #121212;
+  --color-ink-muted: #a0a0a0;
+  --color-surface: #f9f9f9;
+  --color-online: #22c55e;
+  --color-offline: #cccccc;
+  --color-danger: #4b0000;
+}
+
+@layer base {
+  body {
+    @apply bg-surface text-neutral-900 antialiased;
+  }
+}
