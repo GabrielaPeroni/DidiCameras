@@ -1,13 +1,19 @@
 # Fake cameras for local dev and e2e (docker-compose.mock.yml).
 # Mirrors the real camera host: HLS at :8888/<cam>/index.m3u8 (what /api/stream/ proxies and
 # fetch_recordings records) and the WebRTC viewer page at :8889/<cam> (Camera.live_url).
-logLevel: info
+#
+# Cheap by design: a camera's ffmpeg only runs while someone is watching or recording it
+# (runOnDemand), at 640x360/10fps with ultrafast x264, so an idle mock stack uses ~0% CPU.
+logLevel: warn
 
 rtsp: yes
 rtspAddress: :8554
 rtmp: no
 srt: no
-api: no
+
+# Only used by the container healthcheck (doesn't wake any camera).
+api: yes
+apiAddress: :9997
 
 hls: yes
 hlsAddress: :8888
@@ -23,24 +29,25 @@ webrtcLocalTCPAddress: :8189
 webrtcIPsFromInterfaces: no
 webrtcAdditionalHosts: [127.0.0.1]
 
-# Each camera is an ffmpeg test pattern published to itself over RTSP. Video only (H.264):
-# browsers can't play AAC over WebRTC, and fetch_recordings copes with no audio track.
+# Video only (H.264): browsers can't play AAC over WebRTC, and fetch_recordings copes with no
+# audio track. $MTX_PATH is the camera name; each path picks its own test pattern.
 pathDefaults:
-  runOnInitRestart: yes
+  runOnDemandStartTimeout: 15s
+  runOnDemandCloseAfter: 15s
 
 paths:
   cam1:
-    runOnInit: >-
-      ffmpeg -hide_banner -loglevel error -re -f lavfi -i testsrc2=size=1280x720:rate=15
-      -c:v libx264 -preset ultrafast -tune zerolatency -g 30 -pix_fmt yuv420p
+    runOnDemand: >-
+      ffmpeg -hide_banner -loglevel error -re -f lavfi -i testsrc2=size=640x360:rate=10
+      -c:v libx264 -preset ultrafast -tune zerolatency -g 20 -pix_fmt yuv420p
       -f rtsp rtsp://localhost:$RTSP_PORT/$MTX_PATH
   cam2:
-    runOnInit: >-
-      ffmpeg -hide_banner -loglevel error -re -f lavfi -i smptehdbars=size=1280x720:rate=15
-      -c:v libx264 -preset ultrafast -tune zerolatency -g 30 -pix_fmt yuv420p
+    runOnDemand: >-
+      ffmpeg -hide_banner -loglevel error -re -f lavfi -i smptehdbars=size=640x360:rate=10
+      -c:v libx264 -preset ultrafast -tune zerolatency -g 20 -pix_fmt yuv420p
       -f rtsp rtsp://localhost:$RTSP_PORT/$MTX_PATH
   cam3:
-    runOnInit: >-
-      ffmpeg -hide_banner -loglevel error -re -f lavfi -i testsrc=size=1280x720:rate=15
-      -c:v libx264 -preset ultrafast -tune zerolatency -g 30 -pix_fmt yuv420p
+    runOnDemand: >-
+      ffmpeg -hide_banner -loglevel error -re -f lavfi -i testsrc=size=640x360:rate=10
+      -c:v libx264 -preset ultrafast -tune zerolatency -g 20 -pix_fmt yuv420p
       -f rtsp rtsp://localhost:$RTSP_PORT/$MTX_PATH

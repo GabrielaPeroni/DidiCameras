@@ -32,7 +32,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg libpq-de
 COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-dev
 
-COPY . /app
+# Only what the server needs, so frontend/test/docs edits don't invalidate these layers.
+COPY manage.py ./
+COPY DidiCameras/ DidiCameras/
+COPY static/ static/
+COPY app/ app/
 # settings.FRONTEND_DIST: index.html for the SPA catch-all, assets/ picked up by collectstatic
 COPY --from=frontend /frontend/dist /app/frontend/dist
 

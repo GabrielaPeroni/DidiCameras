@@ -14,3 +14,19 @@ staticfiles/
 .venv/
 frontend/dist/
 frontend/coverage/
+
+# Not needed in the image; keeps the build context small and the layer cache stable.
+.git/
+.github/
+.claude/
+docs/
+tests/
+mock/
+frontend/e2e/
+frontend/test-results/
+frontend/playwright-report/
+projeto-camera-2025
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage

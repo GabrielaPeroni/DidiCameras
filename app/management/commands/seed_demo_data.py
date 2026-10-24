@@ -118,18 +118,31 @@ class Command(BaseCommand):
             if exc.response.get("Error", {}).get("Code") not in EXISTING_BUCKET_CODES:
                 raise
 
+        uploaded = 0
         with tempfile.TemporaryDirectory() as tmpdir:
             clips: dict[str, Path] = {}
             for recording in recordings:
-                name = recording.camera.name
-                if name not in clips:
-                    clips[name] = self._make_clip(Path(tmpdir) / f"{name}.mp4", name)
-                clip = clips[name]
                 key = recording.s3_url.split(f"/{bucket}/", 1)[-1]
-                with clip.open("rb") as f:
-                    s3.upload_fileobj(f, bucket, key, ExtraArgs={"ContentType": "video/mp4"})
-                Recording.objects.filter(pk=recording.pk).update(size=clip.stat().st_size)
-        self.stdout.write(f"Uploaded clips for {len(clips)} cameras to bucket {bucket!r}.")
+                size = self._existing_size(s3, bucket, key)
+                if size is None:  # only generate/upload what's missing, so re-seeding is cheap
+                    name = recording.camera.name
+                    if name not in clips:
+                        clips[name] = self._make_clip(Path(tmpdir) / f"{name}.mp4", name)
+                    with clips[name].open("rb") as f:
+                        s3.upload_fileobj(f, bucket, key, ExtraArgs={"ContentType": "video/mp4"})
+                    size = clips[name].stat().st_size
+                    uploaded += 1
+                Recording.objects.filter(pk=recording.pk).update(size=size)
+        self.stdout.write(f"Uploaded {uploaded} clips to bucket {bucket!r} (others already there).")
+
+    @staticmethod
+    def _existing_size(s3: Any, bucket: str, key: str) -> int | None:
+        try:
+            return int(s3.head_object(Bucket=bucket, Key=key)["ContentLength"])
+        except ClientError as exc:
+            if exc.response.get("Error", {}).get("Code") in {"404", "NoSuchKey", "NotFound"}:
+                return None
+            raise
 
     @staticmethod
     def _make_clip(path: Path, camera_name: str) -> Path:
