@@ -21,6 +21,15 @@ def api(user: Any) -> APIClient:
 
 
 @pytest.fixture
+def staff_api(django_user_model: Any) -> APIClient:
+    client = APIClient()
+    client.force_authenticate(
+        django_user_model.objects.create_user("admin", password="secret-pass", is_staff=True)
+    )
+    return client
+
+
+@pytest.fixture
 def cameras() -> list[Camera]:
     return [Camera.objects.create(name="cam1", is_active=True), Camera.objects.create(name="cam2")]
 
@@ -106,8 +115,8 @@ class TestConfig:
         assert body["resolution_display"] == "Nativa"
         assert body["recording_format"] == "mp4"
 
-    def test_patch(self, api: APIClient) -> None:
-        response = api.patch(
+    def test_patch(self, staff_api: APIClient) -> None:
+        response = staff_api.patch(
             "/api/config/",
             {"recording_crf": 20, "recording_resolution": "1920:1080"},
             format="json",
@@ -121,8 +130,8 @@ class TestConfig:
     @pytest.mark.parametrize(
         "payload", [{"recording_crf": 40}, {"recording_crf": 10}, {"recording_duration": 0}]
     )
-    def test_patch_validates(self, api: APIClient, payload: dict[str, int]) -> None:
-        assert api.patch("/api/config/", payload, format="json").status_code == 400
+    def test_patch_validates(self, staff_api: APIClient, payload: dict[str, int]) -> None:
+        assert staff_api.patch("/api/config/", payload, format="json").status_code == 400
 
     @pytest.mark.parametrize(
         "payload",
@@ -133,24 +142,29 @@ class TestConfig:
         ],
     )
     def test_patch_rejects_unsafe_ffmpeg_values(
-        self, api: APIClient, payload: dict[str, str]
+        self, staff_api: APIClient, payload: dict[str, str]
     ) -> None:
-        assert api.patch("/api/config/", payload, format="json").status_code == 400
+        assert staff_api.patch("/api/config/", payload, format="json").status_code == 400
 
-    def test_patch_accepts_blank_resolution(self, api: APIClient) -> None:
-        response = api.patch("/api/config/", {"recording_resolution": ""}, format="json")
+    def test_patch_accepts_blank_resolution(self, staff_api: APIClient) -> None:
+        response = staff_api.patch("/api/config/", {"recording_resolution": ""}, format="json")
         assert response.status_code == 200
 
-    def test_put_not_allowed(self, api: APIClient) -> None:
-        assert api.put("/api/config/", {}, format="json").status_code == 405
+    def test_put_not_allowed(self, staff_api: APIClient) -> None:
+        assert staff_api.put("/api/config/", {}, format="json").status_code == 405
 
-    def test_reset(self, api: APIClient) -> None:
+    def test_reset(self, staff_api: APIClient) -> None:
         FFmpegConfig.objects.create(recording_crf=31, recording_duration=30)
 
-        body = api.post("/api/config/reset/").json()
+        body = staff_api.post("/api/config/reset/").json()
 
         assert body["recording_crf"] == 28
         assert body["recording_duration"] == 5
+
+    def test_non_staff_can_read_but_not_write(self, api: APIClient) -> None:
+        assert api.get("/api/config/").status_code == 200
+        assert api.patch("/api/config/", {"recording_crf": 20}, format="json").status_code == 403
+        assert api.post("/api/config/reset/").status_code == 403
 
 
 class TestAuth:

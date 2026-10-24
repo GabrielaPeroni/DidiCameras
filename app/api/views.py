@@ -19,6 +19,7 @@ from rest_framework.views import APIView
 from app.models import Camera, FFmpegConfig, Recording
 from app.selectors import filter_recordings
 
+from .permissions import IsStaffOrReadOnly
 from .serializers import (
     CameraSerializer,
     CsrfTokenSerializer,
@@ -64,6 +65,7 @@ class RecordingViewSet(viewsets.ReadOnlyModelViewSet[Recording]):
 
 
 class FFmpegConfigView(generics.RetrieveUpdateAPIView[FFmpegConfig]):
+    permission_classes = [IsStaffOrReadOnly]
     serializer_class = FFmpegConfigSerializer
     http_method_names = ["get", "patch", "head", "options"]
 
@@ -72,6 +74,8 @@ class FFmpegConfigView(generics.RetrieveUpdateAPIView[FFmpegConfig]):
 
 
 class FFmpegConfigResetView(APIView):
+    permission_classes = [IsStaffOrReadOnly]
+
     @extend_schema(request=None, responses={200: FFmpegConfigSerializer})
     def post(self, request: Request) -> Response:
         config = get_ffmpeg_config()
