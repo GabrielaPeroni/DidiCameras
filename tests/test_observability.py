@@ -17,6 +17,23 @@ class TestHealth:
         assert response.status_code == 200
         assert response.json() == {"status": "ok", "checks": {"database": "ok"}}
 
+    def test_database_down_returns_503(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        from django.db import DatabaseError, connection
+
+        monkeypatch.setattr(connection, "cursor", MagicMock(side_effect=DatabaseError))
+
+        response = APIClient().get("/api/health/")
+
+        assert response.status_code == 503
+        assert response.json() == {"status": "error", "checks": {"database": "error"}}
+
+    def test_camera_host_up(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setattr(requests, "head", MagicMock())
+
+        response = APIClient().get("/api/health/", {"cameras": "true"})
+
+        assert response.json()["checks"] == {"database": "ok", "cameras": "ok"}
+
     def test_camera_host_down_returns_503(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(requests, "head", MagicMock(side_effect=requests.ConnectionError))
 
@@ -42,3 +59,16 @@ def test_json_formatter_includes_extra_fields() -> None:
     assert payload["message"] == "hi there"
     assert payload["level"] == "WARNING"
     assert payload["camera"] == "cam1"
+
+
+def test_json_formatter_includes_exception() -> None:
+    try:
+        raise ValueError("boom")
+    except ValueError:
+        import sys
+
+        record = logging.makeLogRecord({"msg": "failed", "exc_info": sys.exc_info()})
+
+    payload = json.loads(JsonFormatter().format(record))
+
+    assert "ValueError: boom" in payload["exc_info"]
