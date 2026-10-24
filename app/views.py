@@ -39,7 +39,9 @@ def proxy_hls(request: HttpRequest, cam_name: str, path: str) -> HttpResponseBas
     full_url = f"{settings.CAMERA_STREAM_BASE_URL}/{cam_name}/{path}"
 
     try:
-        r = requests.get(full_url, stream=True, timeout=10)
+        # Forward the query string (e.g. MediaMTX's `?session=` on variant playlists/segments).
+        # `params` re-encodes it, so it can't alter the validated path or the upstream host.
+        r = requests.get(full_url, params=list(request.GET.lists()), stream=True, timeout=10)
         r.raise_for_status()
     except requests.RequestException:
         logger.warning(

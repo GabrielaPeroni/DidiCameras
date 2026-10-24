@@ -26,7 +26,17 @@ def test_known_camera_is_streamed_from_configured_host(
     assert response["Content-Type"] == "application/vnd.apple.mpegurl"
     assert b"".join(response.streaming_content) == b"#EXTM3U"  # type: ignore[attr-defined]
     assert upstream.call_args.args[0] == "http://cameras.test/cam1/index.m3u8"
-    assert upstream.call_args.kwargs == {"stream": True, "timeout": 10}
+    assert upstream.call_args.kwargs["stream"] is True
+    assert upstream.call_args.kwargs["timeout"] == 10
+
+
+def test_query_string_is_forwarded_encoded(session_client: Client, upstream: MagicMock) -> None:
+    session_client.get("/api/stream/cam1/main_stream.m3u8?session=abc-123&x=a%2F..%2Fb")
+
+    params = dict(upstream.call_args.kwargs["params"])
+    assert upstream.call_args.args[0] == "http://cameras.test/cam1/main_stream.m3u8"
+    assert params["session"] == ["abc-123"]
+    assert params["x"] == ["a/../b"]  # stays a query value; requests re-encodes it
 
 
 def test_unknown_camera_404(session_client: Client, upstream: MagicMock) -> None:

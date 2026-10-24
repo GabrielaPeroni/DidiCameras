@@ -124,19 +124,48 @@ DATABASES = {
 }
 
 # Cameras / external services
-# MOCK_CAMERAS lets the app run without real camera hardware (see testing plan).
+# MOCK_CAMERAS=True points every external service at the local mock stack
+# (docker-compose.mock.yml: MediaMTX fake cameras + SeaweedFS S3), so the app runs without hardware.
+# Each value can still be overridden individually.
 MOCK_CAMERAS: bool = config("MOCK_CAMERAS", default=False, cast=bool)
+_external_defaults = (
+    {
+        "CAMERA_STREAM_BASE_URL": "http://localhost:8888",
+        "CAMERA_LIVE_BASE_URL": "http://localhost:8889",
+        "R2_ENDPOINT_URL": "http://localhost:8333",
+        "R2_ACCESS_KEY_ID": "mock",
+        "R2_SECRET_ACCESS_KEY": "mock",
+        "R2_BUCKET_NAME": "bucket-recordings",
+        "RECORDINGS_PUBLIC_BASE_URL": "http://localhost:8333/bucket-recordings",
+    }
+    if MOCK_CAMERAS
+    else {
+        "CAMERA_STREAM_BASE_URL": "https://cams.didicameras.live",
+        "CAMERA_LIVE_BASE_URL": "rtc.didicameras.live",
+        "R2_ENDPOINT_URL": "",
+        "R2_ACCESS_KEY_ID": "",
+        "R2_SECRET_ACCESS_KEY": "",
+        "R2_BUCKET_NAME": "",
+        "RECORDINGS_PUBLIC_BASE_URL": "https://recordings.didicameras.live",
+    }
+)
+# Server-side HLS source (proxied by /api/stream/) and the browser-facing WebRTC page base.
 CAMERA_STREAM_BASE_URL: str = config(
-    "CAMERA_STREAM_BASE_URL", default="https://cams.didicameras.live"
+    "CAMERA_STREAM_BASE_URL", default=_external_defaults["CAMERA_STREAM_BASE_URL"]
+)
+CAMERA_LIVE_BASE_URL: str = config(
+    "CAMERA_LIVE_BASE_URL", default=_external_defaults["CAMERA_LIVE_BASE_URL"]
 )
 
-# Cloudflare R2 Storage
-R2_ACCESS_KEY_ID: str = config("R2_ACCESS_KEY_ID", default="")
-R2_SECRET_ACCESS_KEY: str = config("R2_SECRET_ACCESS_KEY", default="")
-R2_BUCKET_NAME: str = config("R2_BUCKET_NAME", default="")
-R2_ENDPOINT_URL: str = config("R2_ENDPOINT_URL", default="")
+# Cloudflare R2 Storage (S3-compatible; SeaweedFS in mock mode)
+R2_ACCESS_KEY_ID: str = config("R2_ACCESS_KEY_ID", default=_external_defaults["R2_ACCESS_KEY_ID"])
+R2_SECRET_ACCESS_KEY: str = config(
+    "R2_SECRET_ACCESS_KEY", default=_external_defaults["R2_SECRET_ACCESS_KEY"]
+)
+R2_BUCKET_NAME: str = config("R2_BUCKET_NAME", default=_external_defaults["R2_BUCKET_NAME"])
+R2_ENDPOINT_URL: str = config("R2_ENDPOINT_URL", default=_external_defaults["R2_ENDPOINT_URL"])
 RECORDINGS_PUBLIC_BASE_URL: str = config(
-    "RECORDINGS_PUBLIC_BASE_URL", default="https://recordings.didicameras.live"
+    "RECORDINGS_PUBLIC_BASE_URL", default=_external_defaults["RECORDINGS_PUBLIC_BASE_URL"]
 )
 
 """

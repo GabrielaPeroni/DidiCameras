@@ -31,7 +31,7 @@ class Camera(models.Model):
 
     @property
     def live_url(self) -> str:
-        return f"rtc.didicameras.live/{self.name.lower()}"
+        return f"{settings.CAMERA_LIVE_BASE_URL.rstrip('/')}/{self.name.lower()}"
 
 
 class Recording(models.Model):

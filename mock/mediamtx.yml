@@ -1,0 +1,46 @@
+# Fake cameras for local dev and e2e (docker-compose.mock.yml).
+# Mirrors the real camera host: HLS at :8888/<cam>/index.m3u8 (what /api/stream/ proxies and
+# fetch_recordings records) and the WebRTC viewer page at :8889/<cam> (Camera.live_url).
+logLevel: info
+
+rtsp: yes
+rtspAddress: :8554
+rtmp: no
+srt: no
+api: no
+
+hls: yes
+hlsAddress: :8888
+# Plain MPEG-TS segments: no LL-HLS query strings, which the /api/stream/ path allowlist rejects.
+hlsVariant: mpegts
+hlsSegmentDuration: 2s
+hlsAllowOrigin: "*"
+
+webrtc: yes
+webrtcAddress: :8889
+webrtcLocalUDPAddress: :8189
+webrtcLocalTCPAddress: :8189
+webrtcIPsFromInterfaces: no
+webrtcAdditionalHosts: [127.0.0.1]
+
+# Each camera is an ffmpeg test pattern published to itself over RTSP. Video only (H.264):
+# browsers can't play AAC over WebRTC, and fetch_recordings copes with no audio track.
+pathDefaults:
+  runOnInitRestart: yes
+
+paths:
+  cam1:
+    runOnInit: >-
+      ffmpeg -hide_banner -loglevel error -re -f lavfi -i testsrc2=size=1280x720:rate=15
+      -c:v libx264 -preset ultrafast -tune zerolatency -g 30 -pix_fmt yuv420p
+      -f rtsp rtsp://localhost:$RTSP_PORT/$MTX_PATH
+  cam2:
+    runOnInit: >-
+      ffmpeg -hide_banner -loglevel error -re -f lavfi -i smptehdbars=size=1280x720:rate=15
+      -c:v libx264 -preset ultrafast -tune zerolatency -g 30 -pix_fmt yuv420p
+      -f rtsp rtsp://localhost:$RTSP_PORT/$MTX_PATH
+  cam3:
+    runOnInit: >-
+      ffmpeg -hide_banner -loglevel error -re -f lavfi -i testsrc=size=1280x720:rate=15
+      -c:v libx264 -preset ultrafast -tune zerolatency -g 30 -pix_fmt yuv420p
+      -f rtsp rtsp://localhost:$RTSP_PORT/$MTX_PATH

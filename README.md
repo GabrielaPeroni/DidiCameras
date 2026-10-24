@@ -80,13 +80,34 @@ Log in at `http://localhost:5173/login` with the superuser you created. To try t
 
 ### Running without cameras (mock mode)
 
-Point the app at a stand-in for the camera host and storage, so you don't need real hardware:
+`docker-compose.mock.yml` runs the whole app with fake cameras and fake storage, so you need only Docker:
 
-- `CAMERA_STREAM_BASE_URL`: base URL that the HLS proxy and `fetch_recordings` pull from
-- `RECORDINGS_PUBLIC_BASE_URL`: base URL for recording playback links
-- `MOCK_CAMERAS=True`: flag for mock-mode behaviour (on by default in test settings)
+```bash
+docker compose -f docker-compose.mock.yml up --build
+```
 
-A ready-made mock stack (HLS server, MinIO and seed data) is planned in the testing roadmap.
+Then open http://localhost:8000 and log in as **admin / admin** (staff, can edit the recording config) or **viewer / viewer** (read-only).
+
+| Service | Stands in for | Ports |
+|---|---|---|
+| `cameras` ([MediaMTX](https://github.com/bluenviron/mediamtx)) | the camera host. `cam1`–`cam3` are ffmpeg test patterns, served as HLS (what `/api/stream/` proxies and `fetch_recordings` records) and as a WebRTC page (`live_url`) | 8888 HLS, 8889 WebRTC |
+| `s3` ([SeaweedFS](https://github.com/seaweedfs/seaweedfs)) | Cloudflare R2 and the public recordings CDN, with anonymous reads | 8333 |
+| `db` | PostgreSQL | |
+| `seed` | one-shot job: runs migrations, then `seed_demo_data --with-media` creates the demo users, the cameras (`cam3` offline) and recordings spread over several days, and uploads playable clips | |
+| `app` | the production Docker image, with `MOCK_CAMERAS=True` | 8000 |
+
+To record real clips from the fake cameras, run `docker compose -f docker-compose.mock.yml exec app python manage.py fetch_recordings`. It records for the configured duration, at least 1 minute.
+
+**Hybrid dev:** run only the fakes, and run Django and Vite on your machine with hot reload:
+
+```bash
+docker compose -f docker-compose.mock.yml up cameras s3
+MOCK_CAMERAS=True uv run python manage.py migrate
+MOCK_CAMERAS=True uv run python manage.py seed_demo_data --with-media
+MOCK_CAMERAS=True uv run python manage.py runserver
+```
+
+`MOCK_CAMERAS=True` switches the defaults for `CAMERA_STREAM_BASE_URL`, `CAMERA_LIVE_BASE_URL`, `R2_*` and `RECORDINGS_PUBLIC_BASE_URL` to these local services. You can still override any of them individually. `seed_demo_data` refuses to run unless `MOCK_CAMERAS` or `DEBUG` is on, because it creates `admin/admin`.
 
 ### Quality checks
 
@@ -109,6 +130,10 @@ All settings are read from the environment or `.env` via `python-decouple`. See 
 | `DEBUG` | `False` (`True` in dev) | |
 | `CUSTOM_DOMAIN`, `RAILWAY_DOMAIN` | none | Added to `ALLOWED_HOSTS` |
 | `CORS_ALLOWED_ORIGINS`, `CSRF_TRUSTED_ORIGINS` | `http://localhost:5173` | Comma-separated |
+| `MOCK_CAMERAS` | `False` | Points the defaults below at the local mock stack |
+| `CAMERA_STREAM_BASE_URL` | `https://cams.didicameras.live` | Server-side HLS source, proxied by `/api/stream/` |
+| `CAMERA_LIVE_BASE_URL` | `rtc.didicameras.live` | Browser-facing WebRTC page base, used for `live_url` |
+| `RECORDINGS_PUBLIC_BASE_URL` | `https://recordings.didicameras.live` | Public playback base for recordings |
 | `R2_*` | none | Cloudflare R2 credentials, endpoint and bucket |
 | `LOG_LEVEL` / `LOG_FORMAT` | `INFO` / `text` (`json` in prod) | |
 
