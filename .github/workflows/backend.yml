@@ -45,3 +45,10 @@ jobs:
 
       - name: OpenAPI schema is valid
         run: uv run python manage.py spectacular --validate --fail-on-warn --file schema.yml
+
+      - name: OpenAPI schema matches the frontend snapshot
+        run: |
+          diff -u frontend/openapi/schema.yml schema.yml || {
+            echo "::error::Schema drifted from frontend/openapi/schema.yml. Regenerate it (see frontend/README.md)."
+            exit 1
+          }
