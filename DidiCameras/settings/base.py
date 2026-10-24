@@ -114,8 +114,10 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "DidiCameras.wsgi.application"  # WYSI??? :O 727
 
-LOGIN_URL = "/"
-LOGIN_REDIRECT_URL = "/camera/"
+# No view uses Django's login redirects any more; they point at the SPA's routes
+# (frontend/src/routes/paths.ts) so a future @login_required view lands somewhere sensible.
+LOGIN_URL = "/login"
+LOGIN_REDIRECT_URL = "/camera"
 
 DATABASES = {
     "default": dj_database_url.config(default=config("DATABASE_URL", default="")),
@@ -178,6 +180,20 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = "/static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
+
+# React SPA build output (`npm run build` in frontend/, Vite `base: "/static/"`). Only added once
+# it exists, so backend-only checkouts and CI don't trip staticfiles.W004.
+FRONTEND_DIST = BASE_DIR / "frontend" / "dist"
+if FRONTEND_DIST.is_dir():
+    STATICFILES_DIRS.append(FRONTEND_DIST)
+
+
+def _is_vite_hashed_asset(path: str, url: str) -> bool:
+    """Vite fingerprints everything under assets/ (e.g. index-B5s4kZzq.js): cache it forever."""
+    return url.startswith(STATIC_URL + "assets/")
+
+
+WHITENOISE_IMMUTABLE_FILE_TEST = _is_vite_hashed_asset
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 STORAGES = {

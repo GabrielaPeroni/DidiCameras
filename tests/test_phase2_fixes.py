@@ -102,33 +102,33 @@ class TestProxyHls:
     def test_known_camera_is_streamed_from_configured_host(
         self, client: Client, upstream: MagicMock
     ) -> None:
-        response = client.get("/secure-stream/cam1/index.m3u8")
+        response = client.get("/api/stream/cam1/index.m3u8")
 
         assert response.status_code == 200
         assert b"".join(response.streaming_content) == b"#EXTM3U"  # type: ignore[attr-defined]
         assert upstream.call_args.args[0] == "http://cameras.test/cam1/index.m3u8"
 
     def test_unknown_camera_404(self, client: Client, upstream: MagicMock) -> None:
-        assert client.get("/secure-stream/cam9/index.m3u8").status_code == 404
+        assert client.get("/api/stream/cam9/index.m3u8").status_code == 404
         upstream.assert_not_called()
 
     def test_path_traversal_404(self, client: Client, upstream: MagicMock) -> None:
-        assert client.get("/secure-stream/cam1/../secret").status_code == 404
+        assert client.get("/api/stream/cam1/../secret").status_code == 404
         upstream.assert_not_called()
 
     @pytest.mark.parametrize(
         "path", ["%252e%252e/secret.m3u8", "index.m3u8%3Fx=1", "secret.txt", "a//b.ts"]
     )
     def test_non_hls_paths_404(self, client: Client, upstream: MagicMock, path: str) -> None:
-        assert client.get(f"/secure-stream/cam1/{path}").status_code == 404
+        assert client.get(f"/api/stream/cam1/{path}").status_code == 404
         upstream.assert_not_called()
 
     def test_segment_path_allowed(self, client: Client, upstream: MagicMock) -> None:
-        assert client.get("/secure-stream/cam1/seg_001/part-2.ts").status_code == 200
+        assert client.get("/api/stream/cam1/seg_001/part-2.ts").status_code == 200
 
     def test_upstream_failure_404(self, client: Client, upstream: MagicMock) -> None:
         upstream.side_effect = requests.ConnectionError
-        assert client.get("/secure-stream/cam1/index.m3u8").status_code == 404
+        assert client.get("/api/stream/cam1/index.m3u8").status_code == 404
 
     def test_requires_login(self, upstream: MagicMock) -> None:
-        assert Client().get("/secure-stream/cam1/index.m3u8").status_code == 302
+        assert Client().get("/api/stream/cam1/index.m3u8").status_code == 403

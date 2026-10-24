@@ -84,6 +84,14 @@ describe('ConfigPage', () => {
     expect(screen.getByRole('option', { name: 'Média (24)' })).toBeInTheDocument()
   })
 
+  it('treats a blank stored format as mp4', async () => {
+    vi.mocked(getConfig).mockResolvedValue({ ...stored, recording_format: '' })
+    renderPage()
+
+    expect(await screen.findByLabelText('Formato')).toHaveValue('mp4')
+    expect(screen.getByText('.mp4')).toBeInTheDocument()
+  })
+
   it('reports save failures', async () => {
     vi.mocked(updateConfig).mockRejectedValue(new Error('boom'))
     const user = userEvent.setup()
