@@ -14,7 +14,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "gen:api": "openapi-typescript openapi/schema.yml -o src/api/schema.gen.ts",
-    "gen:api:check": "openapi-typescript openapi/schema.yml -o src/api/schema.gen.ts --check"
+    "gen:api:check": "openapi-typescript openapi/schema.yml -o src/api/schema.gen.ts --check",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.104.5",
@@ -35,12 +36,14 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.2",
+    "@vitest/coverage-v8": "^5.0.5",
     "eslint": "^10.13.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.7",
     "globals": "^17.13.0",
     "jsdom": "^29.1.1",
+    "msw": "^3.0.3",
     "openapi-typescript": "^7.13.0",
     "prettier": "^3.9.10",
     "tailwindcss": "^4.3.3",

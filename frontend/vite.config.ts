@@ -25,5 +25,13 @@ export default defineConfig(({ command }) => ({
     globals: true,
     setupFiles: ['./src/test/setup.ts'],
     css: false,
+    coverage: {
+      provider: 'v8',
+      // Count every source file, not only the ones some test happened to import.
+      include: ['src/**/*.{ts,tsx}'],
+      exclude: ['src/**/*.test.{ts,tsx}', 'src/test/**', 'src/api/schema.gen.ts', 'src/main.tsx'],
+      reporter: ['text-summary', 'text', 'json-summary'],
+      thresholds: { statements: 90, branches: 80, functions: 85, lines: 90 },
+    },
   },
 }))
