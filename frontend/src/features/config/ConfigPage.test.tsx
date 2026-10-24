@@ -6,7 +6,8 @@ import { listCameras } from '@/api/cameras'
 import { getConfig, resetConfig, updateConfig } from '@/api/config'
 import type { FFmpegConfig, FFmpegSettings } from '@/api/types'
 import { cameras } from '@/test/fixtures'
-import { renderRoutes } from '@/test/render'
+import { ApiError } from '@/api/client'
+import { fakeAuth, renderRoutes, testUser } from '@/test/render'
 
 import { ConfigPage } from './ConfigPage'
 
@@ -22,7 +23,12 @@ const settings: FFmpegSettings = {
 }
 const stored: FFmpegConfig = { ...settings, resolution_display: 'Alta', crf_display: 'Média' }
 
-const renderPage = () => renderRoutes([{ path: '/', element: <ConfigPage /> }])
+const staff = fakeAuth({
+  state: { status: 'authenticated', user: { ...testUser, is_staff: true } },
+})
+
+const renderPage = (auth = staff) =>
+  renderRoutes([{ path: '/', element: <ConfigPage /> }], { auth })
 
 describe('ConfigPage', () => {
   beforeEach(() => {
@@ -100,5 +106,26 @@ describe('ConfigPage', () => {
     await user.click(await screen.findByRole('button', { name: 'Salvar Configurações' }))
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Não foi possível salvar')
+  })
+
+  it('explains a 403 instead of a generic failure', async () => {
+    vi.mocked(updateConfig).mockRejectedValue(new ApiError(403, { detail: 'nope' }))
+    const user = userEvent.setup()
+    renderPage()
+
+    await user.click(await screen.findByRole('button', { name: 'Salvar Configurações' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('não tem permissão')
+  })
+
+  it('is read-only for non-staff users', async () => {
+    renderPage(fakeAuth())
+
+    expect(await screen.findByRole('note')).toHaveTextContent('Somente administradores')
+    expect(screen.getByLabelText('Resolução')).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Salvar Configurações' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Restaurar Padrão' })).toBeDisabled()
+    // The stored values are still shown.
+    expect(screen.getByLabelText('Resolução')).toHaveValue('1920:1080')
   })
 })

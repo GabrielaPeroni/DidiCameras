@@ -1,8 +1,10 @@
 import { useState, type SubmitEvent, type ReactNode } from 'react'
 
+import { ApiError } from '@/api/client'
 import type { FFmpegConfig, FFmpegSettings } from '@/api/types'
 import { Button, Card, ErrorState, PageHeader, Spinner } from '@/components/ui'
 import { useCameras } from '@/features/cameras/queries'
+import { useAuth } from '@/lib/authContext'
 
 import {
   CRF_OPTIONS,
@@ -46,6 +48,8 @@ function ConfigForm({ saved }: { saved: FFmpegConfig }) {
   const [feedback, setFeedback] = useState<Feedback>(null)
   const update = useSaveConfig()
   const cameras = useCameras()
+  // Writes are staff-only on the API (IsStaffOrReadOnly); viewers get a read-only form.
+  const canEdit = useAuth().state.user?.is_staff === true
 
   const set = <K extends keyof FFmpegSettings>(key: K, value: FFmpegSettings[K]) => {
     setDraft((d) => ({ ...d, [key]: value }))
@@ -59,8 +63,14 @@ function ConfigForm({ saved }: { saved: FFmpegConfig }) {
         setDraft(toSettings(stored))
         setFeedback({ kind: 'success', message: successMessage })
       },
-      onError: () => {
-        setFeedback({ kind: 'error', message: 'Não foi possível salvar. Tente novamente.' })
+      onError: (error) => {
+        const forbidden = error instanceof ApiError && error.status === 403
+        setFeedback({
+          kind: 'error',
+          message: forbidden
+            ? 'Você não tem permissão para alterar as configurações.'
+            : 'Não foi possível salvar. Tente novamente.',
+        })
       },
     })
   }
@@ -76,7 +86,15 @@ function ConfigForm({ saved }: { saved: FFmpegConfig }) {
     <form onSubmit={handleSubmit} className="grid gap-6 lg:grid-cols-[1fr_20rem]">
       <Card className="p-6">
         <h2 className="mb-4 text-lg font-bold">Configurações de Gravação</h2>
-        <div className="grid gap-4 sm:grid-cols-2">
+        {!canEdit && (
+          <p
+            role="note"
+            className="mb-4 rounded-lg bg-neutral-100 px-3 py-2 text-sm text-neutral-700"
+          >
+            Somente administradores podem alterar as configurações de gravação.
+          </p>
+        )}
+        <fieldset disabled={!canEdit} className="grid gap-4 sm:grid-cols-2">
           <Field label="Duração" htmlFor="duration">
             <select
               id="duration"
@@ -171,7 +189,7 @@ function ConfigForm({ saved }: { saved: FFmpegConfig }) {
               ))}
             </select>
           </Field>
-        </div>
+        </fieldset>
       </Card>
 
       <div className="flex flex-col gap-4">
@@ -202,12 +220,12 @@ function ConfigForm({ saved }: { saved: FFmpegConfig }) {
           </p>
         )}
 
-        <Button type="submit" disabled={update.isPending}>
+        <Button type="submit" disabled={!canEdit || update.isPending}>
           {update.isPending ? 'Salvando…' : 'Salvar Configurações'}
         </Button>
         <Button
           variant="secondary"
-          disabled={update.isPending}
+          disabled={!canEdit || update.isPending}
           onClick={() => {
             save({ kind: 'reset' }, 'Configurações restauradas para o padrão.')
           }}

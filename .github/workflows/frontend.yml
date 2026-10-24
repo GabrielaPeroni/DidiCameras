@@ -26,5 +26,5 @@ jobs:
       - run: npm run gen:api:check
       - run: npm run lint
       - run: npm run typecheck
-      - run: npm test
+      - run: npm run test:coverage
       - run: npm run build
