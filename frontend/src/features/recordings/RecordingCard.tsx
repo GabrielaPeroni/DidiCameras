@@ -32,14 +32,10 @@ export function RecordingCard({ recording }: { recording: Recording }) {
       {recording.s3_url ? (
         <Link
           to={paths.recording(camera.name, recording.id)}
+          aria-label={`Assistir gravação de ${camera.name} em ${formatDate(recording.timestamp)} ${formatTime(recording.timestamp)}`}
           className={buttonClasses('primary', 'mt-2 w-full')}
         >
           Assistir
-          <span className="sr-only">
-            {' '}
-            gravação de {camera.name} em {formatDate(recording.timestamp)}{' '}
-            {formatTime(recording.timestamp)}
-          </span>
         </Link>
       ) : (
         <span

@@ -36,10 +36,9 @@ describe('RecordingsList', () => {
 
     expect(within(first).getByText('02/01/2025')).toBeInTheDocument()
     expect(within(first).getByText('10:30')).toBeInTheDocument()
-    expect(within(first).getByRole('link', { name: /Assistir/ })).toHaveAttribute(
-      'href',
-      '/cam1/17',
-    )
+    expect(
+      within(first).getByRole('link', { name: 'Assistir gravação de cam1 em 02/01/2025 10:30' }),
+    ).toHaveAttribute('href', '/cam1/17')
     expect(within(second).queryByRole('link')).not.toBeInTheDocument()
     expect(within(second).getByText('Nenhum arquivo')).toBeInTheDocument()
   })
