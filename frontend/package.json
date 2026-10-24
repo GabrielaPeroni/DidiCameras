@@ -14,7 +14,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "gen:api": "openapi-typescript openapi/schema.yml -o src/api/schema.gen.ts",
-    "gen:api:check": "openapi-typescript openapi/schema.yml -o src/api/schema.gen.ts --check"
+    "gen:api:check": "openapi-typescript openapi/schema.yml -o src/api/schema.gen.ts --check",
+    "e2e": "playwright test"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.104.5",
@@ -27,6 +28,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.56.1",
     "@tailwindcss/vite": "^4.3.3",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",

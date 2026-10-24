@@ -1,0 +1,81 @@
+name: E2E
+
+# Playwright against the full mock stack (docker-compose.mock.yml --profile app): production
+# image + Postgres + fake cameras + fake S3, seeded with demo data. No real hardware or R2.
+#
+# Kept cheap: only runs when app/infra code changes, cancels superseded runs, reuses Docker
+# layers from the GitHub Actions cache, and uses the runner's preinstalled Chrome.
+
+on:
+  pull_request:
+    paths: &paths
+      - 'app/**'
+      - 'DidiCameras/**'
+      - 'frontend/**'
+      - 'static/**'
+      - 'mock/**'
+      - 'Dockerfile'
+      - 'docker-compose.mock.yml'
+      - 'pyproject.toml'
+      - 'uv.lock'
+      - '.github/workflows/e2e.yml'
+  push:
+    branches: [main]
+    paths: *paths
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build app image (layer cache in GitHub Actions)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: didicameras:mock
+          cache-from: type=gha,scope=mock-app
+          cache-to: type=gha,scope=mock-app,mode=max
+
+      - name: Start mock stack
+        run: docker compose -f docker-compose.mock.yml --profile app up -d --no-build --wait --wait-timeout 180
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install test runner
+        working-directory: frontend
+        run: npm ci
+
+      - name: Playwright
+        working-directory: frontend
+        run: npm run e2e
+
+      - name: Stack logs on failure
+        if: failure()
+        run: docker compose -f docker-compose.mock.yml --profile app logs --no-color --tail 200
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            frontend/playwright-report
+            frontend/test-results
+          retention-days: 7
+
+      - name: Stop mock stack
+        if: always()
+        run: docker compose -f docker-compose.mock.yml --profile app down -v

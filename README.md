@@ -126,6 +126,22 @@ uv run pytest --cov       # coverage gate: 95% (branch coverage, migrations excl
 
 CI (`.github/workflows/backend.yml`) runs all of these on every PR.
 
+### End-to-end tests
+
+[Playwright](https://playwright.dev) drives the real UI against the full mock stack. It covers:
+- login, the camera grid and the live view
+- history filters and playback of a clip from S3
+- staff editing and resetting the config
+- live HLS through the authenticated proxy
+- logout
+
+```bash
+docker compose -f docker-compose.mock.yml --profile app up -d --build --wait
+cd frontend && npm run e2e        # uses your installed Google Chrome (H.264 playback)
+```
+
+`.github/workflows/e2e.yml` runs these when app or infra code changes. It caches Docker layers in GitHub Actions, and failures upload the Playwright traces.
+
 ## Configuration
 
 All settings are read from the environment or `.env` via `python-decouple`. See [`.env.example`](.env.example).
