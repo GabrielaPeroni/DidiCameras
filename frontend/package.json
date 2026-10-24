@@ -16,6 +16,7 @@
     "gen:api": "openapi-typescript ${OPENAPI_SCHEMA:-http://127.0.0.1:8000/api/schema/} -o src/api/schema.gen.ts"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.104.5",
     "clsx": "^2.1.1",
     "hls.js": "^1.7.3",
     "lucide-react": "^1.61.0",

@@ -1,24 +1,30 @@
 import { createBrowserRouter, Navigate, type RouteObject } from 'react-router'
 
-import { AppLayout } from '@/components/AppLayout'
 import { LoginPage } from '@/features/auth/LoginPage'
 import { CamerasPage } from '@/features/cameras/CamerasPage'
 import { ConfigPage } from '@/features/config/ConfigPage'
 import { PlayerPage } from '@/features/player/PlayerPage'
 import { HistoryPage } from '@/features/recordings/HistoryPage'
 
+import { AuthedLayout } from './AuthedLayout'
 import { paths } from './paths'
+import { RequireAuth } from './RequireAuth'
 
 /** Mirrors `app/urls.py`; `/` keeps redirecting to the live view like the Django login flow did. */
 export const routes: RouteObject[] = [
   { path: paths.login, element: <LoginPage /> },
   {
-    element: <AppLayout />,
+    element: <RequireAuth />,
     children: [
-      { path: paths.cameras, element: <CamerasPage /> },
-      { path: paths.history, element: <HistoryPage /> },
-      { path: paths.config, element: <ConfigPage /> },
-      { path: '/:cameraId/:recordingId', element: <PlayerPage /> },
+      {
+        element: <AuthedLayout />,
+        children: [
+          { path: paths.cameras, element: <CamerasPage /> },
+          { path: paths.history, element: <HistoryPage /> },
+          { path: paths.config, element: <ConfigPage /> },
+          { path: '/:cameraId/:recordingId', element: <PlayerPage /> },
+        ],
+      },
     ],
   },
   { path: '/', element: <Navigate to={paths.cameras} replace /> },
